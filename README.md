@@ -51,3 +51,42 @@ npm.cmd run dev
 ```
 
 Frontend padrao: `http://localhost:5173`
+
+## Publicar Gratis (Online)
+
+### 1) Backend no Render (Free)
+
+1. Crie conta em `render.com` e conecte ao GitHub.
+2. Clique em New + Web Service.
+3. Selecione este repositorio.
+4. Configure:
+	- Root Directory: `backend`
+	- Environment: `Java`
+	- Build Command: `mvn clean package -DskipTests`
+	- Start Command: `java -jar target/evoluta-manager-api-1.0.0.jar`
+5. Em Environment Variables adicione:
+	- `SPRING_DATASOURCE_URL` (opcional; sem isso usa H2)
+	- `SPRING_DATASOURCE_USERNAME` (opcional)
+	- `SPRING_DATASOURCE_PASSWORD` (opcional)
+	- `SPRING_DATASOURCE_DRIVER_CLASS_NAME` (opcional)
+	- `SPRING_JPA_DATABASE_PLATFORM` (opcional)
+	- `APP_CORS_ALLOWED_ORIGINS=https://SEU-FRONTEND.vercel.app`
+
+### 2) Frontend no Vercel (Free)
+
+1. Crie conta em `vercel.com` e conecte ao GitHub.
+2. Clique em Add New Project e selecione este repositorio.
+3. Configure:
+	- Root Directory: `frontend`
+	- Build Command: `npm run build`
+	- Output Directory: `dist`
+4. Em Environment Variables adicione:
+	- `VITE_API_BASE_URL=https://SEU-BACKEND.onrender.com/api`
+5. Deploy.
+
+### 3) Confirmar acesso
+
+- Abra a URL do Vercel e teste login.
+- Usuario padrao:
+  - Email: `deborah@evoluta.com`
+  - Senha: `password`

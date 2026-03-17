@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
+
+function apiOrigin() {
+    const base = api.defaults.baseURL || 'http://localhost:8081/api';
+    try {
+        return new URL(base).origin;
+    } catch {
+        return 'http://localhost:8081';
+    }
+}
 import SearchField from '../components/SearchField';
 
 function hojeISO() {
@@ -132,7 +141,7 @@ export default function ReunioesPage({ clientes }) {
             return;
         }
 
-        const base = api.defaults.baseURL || 'http://localhost:8081/api';
+        const base = api.defaults.baseURL || `${apiOrigin()}/api`;
         const url = `${base}/reunioes/relatorio-pdf?clienteId=${id}&mes=${mesFiltro}`;
         window.open(url, '_blank');
     }
@@ -214,7 +223,7 @@ export default function ReunioesPage({ clientes }) {
                                         {r.arquivos?.length ? (
                                             <div className="anexos-inline">
                                                 {r.arquivos.map((a) => (
-                                                    <a key={a.id} href={`http://localhost:8081/api/reunioes/arquivos/${a.id}`} target="_blank" rel="noreferrer">
+                                                    <a key={a.id} href={`${apiOrigin()}/api/reunioes/arquivos/${a.id}`} target="_blank" rel="noreferrer">
                                                         {a.nomeOriginal}
                                                     </a>
                                                 ))}
