@@ -41,12 +41,12 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
         });
     }, [clientesOrdenados, busca]);
 
-    function onChange(e) {
+    function handleInputChange(e) {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    async function onSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         if (!form.nome.trim()) {
             setErro('Informe o nome do cliente.');
@@ -80,12 +80,12 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
             <div className="card">
                 <h3>Novo Cliente</h3>
                 {erro ? <div className="error">{erro}</div> : null}
-                <form className="form-grid" onSubmit={onSubmit}>
-                    <input name="nome" placeholder="Nome*" value={form.nome} onChange={onChange} required />
-                    <input name="empresa" placeholder="Empresa" value={form.empresa} onChange={onChange} />
-                    <input name="contato" placeholder="Contato" value={form.contato} onChange={onChange} />
-                    <input name="email" placeholder="E-mail" type="email" value={form.email} onChange={onChange} />
-                    <select name="status" value={form.status} onChange={onChange}>
+                <form className="form-grid" onSubmit={handleSubmit}>
+                    <input name="nome" placeholder="Nome*" value={form.nome} onChange={handleInputChange} required />
+                    <input name="empresa" placeholder="Empresa" value={form.empresa} onChange={handleInputChange} />
+                    <input name="contato" placeholder="Contato" value={form.contato} onChange={handleInputChange} />
+                    <input name="email" placeholder="E-mail" type="email" value={form.email} onChange={handleInputChange} />
+                    <select name="status" value={form.status} onChange={handleInputChange}>
                         <option value="ativo">Ativo</option>
                         <option value="pausado">Pausado</option>
                         <option value="finalizado">Finalizado</option>
@@ -94,7 +94,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                         name="observacoes"
                         placeholder="Observacoes"
                         value={form.observacoes}
-                        onChange={onChange}
+                        onChange={handleInputChange}
                         rows={3}
                     />
                     <button className="primary" disabled={loading} type="submit">

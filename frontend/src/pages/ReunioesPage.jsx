@@ -73,17 +73,17 @@ export default function ReunioesPage({ clientes }) {
         }
     }, [clientesOrdenados, clienteRelatorio]);
 
-    function onChange(e) {
+    function handleInputChange(e) {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    function onChangeArquivos(e) {
+    function handleFilesChange(e) {
         const files = Array.from(e.target.files || []);
         setForm((prev) => ({ ...prev, arquivos: files }));
     }
 
-    async function onSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         setErro('');
         setOk('');
@@ -119,7 +119,7 @@ export default function ReunioesPage({ clientes }) {
         }
     }
 
-    function onChangeMes(e) {
+    function handleMonthChange(e) {
         const novoMes = e.target.value;
         setMesFiltro(novoMes);
         carregarReunioes(novoMes);
@@ -144,7 +144,7 @@ export default function ReunioesPage({ clientes }) {
                 {erro ? <div className="error">{erro}</div> : null}
                 {ok ? <div className="success">{ok}</div> : null}
 
-                <form className="form-grid" onSubmit={onSubmit}>
+                <form className="form-grid" onSubmit={handleSubmit}>
                     <SearchField
                         name="buscaCliente"
                         placeholder="Buscar cliente por nome ou telefone"
@@ -152,22 +152,22 @@ export default function ReunioesPage({ clientes }) {
                         onChange={(e) => setBuscaCliente(e.target.value)}
                     />
 
-                    <select name="clienteId" value={form.clienteId} onChange={onChange} required>
+                    <select name="clienteId" value={form.clienteId} onChange={handleInputChange} required>
                         <option value="">Selecione o cliente</option>
                         {clientesFiltrados.map((c) => (
                             <option key={c.id} value={c.id}>{c.nome}{c.contato ? ` - ${c.contato}` : ''}</option>
                         ))}
                     </select>
 
-                    <input type="date" name="dataReuniao" value={form.dataReuniao} onChange={onChange} required />
+                    <input type="date" name="dataReuniao" value={form.dataReuniao} onChange={handleInputChange} required />
                     <textarea
                         name="anotacoes"
                         rows={5}
                         placeholder="Anotacoes da reuniao"
                         value={form.anotacoes}
-                        onChange={onChange}
+                        onChange={handleInputChange}
                     />
-                    <input type="file" multiple accept="application/pdf,image/*" onChange={onChangeArquivos} />
+                    <input type="file" multiple accept="application/pdf,image/*" onChange={handleFilesChange} />
                     <button className="primary" disabled={loading} type="submit">
                         {loading ? 'Salvando...' : 'Salvar Reuniao'}
                     </button>
@@ -178,7 +178,7 @@ export default function ReunioesPage({ clientes }) {
                 <div className="toolbar">
                     <h3>Reunioes do Mes</h3>
                     <div className="toolbar-actions">
-                        <input type="month" value={mesFiltro} onChange={onChangeMes} />
+                        <input type="month" value={mesFiltro} onChange={handleMonthChange} />
                         <select value={clienteRelatorio} onChange={(e) => setClienteRelatorio(e.target.value)}>
                             <option value="">Cliente para relatorio</option>
                             {clientesOrdenados.map((c) => (

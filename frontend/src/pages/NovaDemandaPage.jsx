@@ -41,12 +41,12 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
         });
     }, [clientesOrdenados, buscaCliente]);
 
-    function onChange(e) {
+    function handleInputChange(e) {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    async function onSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         setErro('');
         setOk('');
@@ -86,7 +86,7 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
             {erro ? <div className="error">{erro}</div> : null}
             {ok ? <div className="success">{ok}</div> : null}
 
-            <form className="form-grid" onSubmit={onSubmit}>
+            <form className="form-grid" onSubmit={handleSubmit}>
                 <SearchField
                     name="buscaCliente"
                     placeholder="Buscar cliente por nome ou telefone"
@@ -94,25 +94,25 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
                     onChange={(e) => setBuscaCliente(e.target.value)}
                 />
 
-                <select name="clienteId" value={form.clienteId} onChange={onChange} required>
+                <select name="clienteId" value={form.clienteId} onChange={handleInputChange} required>
                     <option value="">Selecione o cliente</option>
                     {clientesFiltrados.map((c) => (
                         <option key={c.id} value={c.id}>{c.nome}{c.contato ? ` - ${c.contato}` : ''}</option>
                     ))}
                 </select>
 
-                <input name="titulo" placeholder="Titulo da demanda*" value={form.titulo} onChange={onChange} required />
-                <textarea name="descricao" rows={4} placeholder="Descricao" value={form.descricao} onChange={onChange} />
+                <input name="titulo" placeholder="Titulo da demanda*" value={form.titulo} onChange={handleInputChange} required />
+                <textarea name="descricao" rows={4} placeholder="Descricao" value={form.descricao} onChange={handleInputChange} />
 
-                <input name="dataDemanda" type="date" value={form.dataDemanda} onChange={onChange} required />
+                <input name="dataDemanda" type="date" value={form.dataDemanda} onChange={handleInputChange} required />
 
-                <select name="prioridade" value={form.prioridade} onChange={onChange}>
+                <select name="prioridade" value={form.prioridade} onChange={handleInputChange}>
                     <option value="baixa">Baixa</option>
                     <option value="media">Media</option>
                     <option value="alta">Alta</option>
                 </select>
 
-                <select name="status" value={form.status} onChange={onChange}>
+                <select name="status" value={form.status} onChange={handleInputChange}>
                     <option value="pendente">Pendente</option>
                     <option value="em_andamento">Em andamento</option>
                     <option value="concluida">Concluida</option>

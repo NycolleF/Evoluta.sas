@@ -7,6 +7,7 @@ import ClientesPage from './pages/ClientesPage';
 import NovaDemandaPage from './pages/NovaDemandaPage';
 import ReunioesPage from './pages/ReunioesPage';
 import CalendarioPage from './pages/CalendarioPage';
+import { PAGE_TITLES, ROUTES } from './constants/routes';
 
 export default function App() {
     const [user, setUser] = useState(() => {
@@ -70,7 +71,7 @@ export default function App() {
 
     function handleDemandaCriada() {
         carregarDados();
-        window.location.hash = '#dashboard';
+        window.location.hash = ROUTES.DASHBOARD;
     }
 
     function toggleTheme() {
@@ -81,7 +82,7 @@ export default function App() {
         const u = { id: data.usuarioId, nome: data.nome, email: data.email };
         localStorage.setItem('evoluta_user', JSON.stringify(u));
         setUser(u);
-        window.location.hash = '#dashboard';
+        window.location.hash = ROUTES.DASHBOARD;
     }
 
     function logout() {
@@ -93,30 +94,26 @@ export default function App() {
         return <LoginPage onLogin={handleLogin} />;
     }
 
-    const pageTitle =
-        hash === '#cadastro-cliente'
-            ? 'Cadastro de Cliente'
-            : hash === '#nova-demanda'
-                ? 'Criar Demanda'
-                : hash === '#reunioes'
-                    ? 'Reunioes e Anotacoes'
-                    : hash === '#calendario'
-                        ? 'Calendario de Reunioes'
-                        : 'Demandas do Dia';
+    const pageTitle = PAGE_TITLES[hash] || PAGE_TITLES[ROUTES.DASHBOARD];
+
+    function renderPage() {
+        switch (hash) {
+            case ROUTES.CADASTRO_CLIENTE:
+                return <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />;
+            case ROUTES.NOVA_DEMANDA:
+                return <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />;
+            case ROUTES.REUNIOES:
+                return <ReunioesPage clientes={clientes} />;
+            case ROUTES.CALENDARIO:
+                return <CalendarioPage />;
+            default:
+                return <DashboardPage resumo={resumo} />;
+        }
+    }
 
     return (
         <Layout user={user} onLogout={logout} pageTitle={pageTitle} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
-            {hash === '#cadastro-cliente' ? (
-                <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />
-            ) : hash === '#nova-demanda' ? (
-                <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />
-            ) : hash === '#reunioes' ? (
-                <ReunioesPage clientes={clientes} />
-            ) : hash === '#calendario' ? (
-                <CalendarioPage />
-            ) : (
-                <DashboardPage resumo={resumo} />
-            )}
+            {renderPage()}
         </Layout>
     );
 }

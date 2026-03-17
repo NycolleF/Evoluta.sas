@@ -1,14 +1,8 @@
+import { MENU_ITEMS } from '../constants/routes';
+
 function navClass(currentHash, targetHash) {
     return currentHash === targetHash ? 'is-active' : '';
 }
-
-const menuItems = [
-    { href: '#dashboard', label: 'Principal', icon: '◌' },
-    { href: '#cadastro-cliente', label: 'Cadastro Cliente', icon: '◫' },
-    { href: '#nova-demanda', label: 'Criar Demanda', icon: '✦' },
-    { href: '#reunioes', label: 'Reunioes', icon: '◍' },
-    { href: '#calendario', label: 'Calendario', icon: '▣' }
-];
 
 export default function Layout({ user, onLogout, children, pageTitle, theme, onToggleTheme, activeHash }) {
     return (
@@ -23,7 +17,7 @@ export default function Layout({ user, onLogout, children, pageTitle, theme, onT
                     <div className="side-box">
                         <span className="side-box-title">Navegacao</span>
                         <nav className="menu">
-                            {menuItems.map((item) => (
+                            {MENU_ITEMS.map((item) => (
                                 <a key={item.href} className={navClass(activeHash, item.href)} href={item.href}>
                                     <span className="menu-link-inner">
                                         <span className="menu-icon" aria-hidden="true">{item.icon}</span>
