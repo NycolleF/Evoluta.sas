@@ -16,7 +16,7 @@ export default function DashboardPage({ resumo }) {
                 <div>
                     <span className="page-kicker">Resumo de hoje</span>
                     <h3>Visao rapida da operacao</h3>
-                    <p>Veja os principais indicadores do dia e acompanhe o andamento da operacao em poucos segundos.</p>
+                    <p>Acompanhe clientes ativos, demandas prioritarias e o ritmo geral do dia em um unico painel.</p>
                 </div>
             </section>
 
@@ -53,7 +53,7 @@ export default function DashboardPage({ resumo }) {
                     <tbody>
                         {demandas.length === 0 ? (
                             <tr>
-                                <td colSpan={4}>Nao ha demandas previstas para hoje.</td>
+                                <td colSpan={4}>Nenhuma demanda para hoje.</td>
                             </tr>
                         ) : (
                             demandas.map((d) => (

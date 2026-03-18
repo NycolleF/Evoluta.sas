@@ -1,33 +1,25 @@
 package com.evoluta.manager.controller;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
-import com.evoluta.manager.model.Cliente;
-import com.evoluta.manager.model.Reuniao;
-import com.evoluta.manager.model.ReuniaoArquivo;
-import com.evoluta.manager.repository.ClienteRepository;
-import com.evoluta.manager.repository.ReuniaoArquivoRepository;
-import com.evoluta.manager.repository.ReuniaoRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -35,18 +27,31 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.evoluta.manager.model.Cliente;
+import com.evoluta.manager.model.Reuniao;
+import com.evoluta.manager.model.ReuniaoArquivo;
+import com.evoluta.manager.repository.ClienteRepository;
+import com.evoluta.manager.repository.ReuniaoArquivoRepository;
+import com.evoluta.manager.repository.ReuniaoRepository;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 
 @RestController
 @RequestMapping("/api/reunioes")
 public class ReuniaoController {
-    private static final String MSG_CLIENTE_NAO_ENCONTRADO = "Cliente nao encontrado.";
-    private static final String MSG_ARQUIVO_INVALIDO = "Apenas PDF e imagens sao permitidos.";
-    private static final String MSG_FALHA_ARQUIVOS = "Falha ao salvar os arquivos.";
-    private static final String MSG_FALHA_PDF = "Falha ao gerar o relatorio PDF.";
-    private static final String MSG_FALHA_ABRIR_ARQUIVO = "Falha ao abrir o arquivo.";
-
     private final ReuniaoRepository reuniaoRepository;
     private final ReuniaoArquivoRepository reuniaoArquivoRepository;
     private final ClienteRepository clienteRepository;
@@ -61,9 +66,17 @@ public class ReuniaoController {
     }
 
     @GetMapping
-    public List<Reuniao> listar(@RequestParam(required = false) String mes) {
-        YearMonth ref = resolverMes(mes);
-        return reuniaoRepository.findByDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(ref.atDay(1), ref.atEndOfMonth());
+    public ResponseEntity<?> listar(@RequestParam(required = false) String mes) {
+        YearMonth ref;
+        try {
+            ref = parseMes(mes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+        }
+
+        return ResponseEntity.ok(
+                reuniaoRepository.findByDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(ref.atDay(1), ref.atEndOfMonth())
+        );
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -75,7 +88,12 @@ public class ReuniaoController {
     ) {
         Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_CLIENTE_NAO_ENCONTRADO));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Cliente nao encontrado."));
+        }
+
+        List<MultipartFile> arquivosValidos = normalizarArquivos(arquivos);
+        if (arquivosValidos == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Apenas PDF e imagens sao permitidos."));
         }
 
         Reuniao reuniao = new Reuniao();
@@ -84,28 +102,20 @@ public class ReuniaoController {
         reuniao.setAnotacoes(anotacoes);
         reuniao.setCriadoEm(LocalDateTime.now());
 
-        if (arquivos != null && arquivos.length > 0) {
+        List<Path> arquivosSalvos = new ArrayList<>();
+        if (!arquivosValidos.isEmpty()) {
             Path dir = Paths.get(uploadDir).toAbsolutePath().normalize();
             try {
                 Files.createDirectories(dir);
 
-                for (MultipartFile arquivo : arquivos) {
-                    if (arquivo == null || arquivo.isEmpty()) {
-                        continue;
-                    }
-
-                    String contentTypeSeguro = Objects.toString(arquivo.getContentType(), "");
-                    boolean pdf = "application/pdf".equalsIgnoreCase(contentTypeSeguro);
-                    boolean imagem = contentTypeSeguro.toLowerCase(Locale.ROOT).startsWith("image/");
-                    if (!pdf && !imagem) {
-                        return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_ARQUIVO_INVALIDO));
-                    }
-
+                for (MultipartFile arquivo : arquivosValidos) {
+                    String contentTypeSeguro = Objects.toString(arquivo.getContentType(), "").trim();
                     String original = Objects.toString(arquivo.getOriginalFilename(), "arquivo");
                     if (original.isBlank()) original = "arquivo";
                     String nome = UUID.randomUUID() + "_" + original.replaceAll("[^a-zA-Z0-9._-]", "_");
                     Path destino = dir.resolve(nome);
                     Files.copy(arquivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+                    arquivosSalvos.add(destino);
 
                     ReuniaoArquivo meta = new ReuniaoArquivo();
                     meta.setReuniao(reuniao);
@@ -116,11 +126,17 @@ public class ReuniaoController {
                     reuniao.getArquivos().add(meta);
                 }
             } catch (IOException e) {
-                return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_ARQUIVOS));
+                limparArquivosSalvos(arquivosSalvos);
+                return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao salvar os arquivos."));
             }
         }
 
-        return ResponseEntity.ok(reuniaoRepository.save(reuniao));
+        try {
+            return ResponseEntity.ok(reuniaoRepository.save(reuniao));
+        } catch (RuntimeException e) {
+            limparArquivosSalvos(arquivosSalvos);
+            return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao salvar a reuniao."));
+        }
     }
 
     @GetMapping("/relatorio-pdf")
@@ -128,10 +144,16 @@ public class ReuniaoController {
     public ResponseEntity<?> gerarRelatorioPdf(@RequestParam Integer clienteId, @RequestParam(required = false) String mes) {
         Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_CLIENTE_NAO_ENCONTRADO));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Cliente nao encontrado."));
         }
 
-        YearMonth ref = resolverMes(mes);
+        YearMonth ref;
+        try {
+            ref = parseMes(mes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+        }
+
         List<Reuniao> reunioes = reuniaoRepository.findByClienteIdAndDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(
                 clienteId,
                 ref.atDay(1),
@@ -147,7 +169,7 @@ public class ReuniaoController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nomeArquivo + "\"")
                     .body(pdf);
         } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_PDF));
+            return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao gerar o relatorio PDF."));
         }
     }
 
@@ -171,23 +193,62 @@ public class ReuniaoController {
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + arquivo.getNomeOriginal() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDispositionInline(arquivo.getNomeOriginal()))
                     .body(resource);
         } catch (IOException | IllegalArgumentException e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_ABRIR_ARQUIVO));
+            return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao abrir o arquivo."));
         }
     }
 
-    private YearMonth resolverMes(String mes) {
+    private YearMonth parseMes(String mes) {
         if (mes == null || mes.isBlank()) {
             return YearMonth.now();
         }
 
         try {
             return YearMonth.parse(mes);
-        } catch (RuntimeException ignored) {
-            return YearMonth.now();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Parametro 'mes' invalido. Use o formato yyyy-MM.");
         }
+    }
+
+    private List<MultipartFile> normalizarArquivos(MultipartFile[] arquivos) {
+        List<MultipartFile> arquivosValidos = new ArrayList<>();
+        if (arquivos == null || arquivos.length == 0) {
+            return arquivosValidos;
+        }
+
+        for (MultipartFile arquivo : arquivos) {
+            if (arquivo == null || arquivo.isEmpty()) {
+                continue;
+            }
+
+            String contentTypeSeguro = Objects.toString(arquivo.getContentType(), "").trim();
+            boolean pdf = "application/pdf".equalsIgnoreCase(contentTypeSeguro);
+            boolean imagem = contentTypeSeguro.toLowerCase(Locale.ROOT).startsWith("image/");
+            if (!pdf && !imagem) {
+                return null;
+            }
+
+            arquivosValidos.add(arquivo);
+        }
+
+        return arquivosValidos;
+    }
+
+    private void limparArquivosSalvos(List<Path> arquivosSalvos) {
+        for (Path arquivoSalvo : arquivosSalvos) {
+            try {
+                Files.deleteIfExists(arquivoSalvo);
+            } catch (IOException ignored) {
+            }
+        }
+    }
+
+    private String contentDispositionInline(String nomeArquivo) {
+        String nomeSeguro = Objects.toString(nomeArquivo, "arquivo").replace("\"", "");
+        String encoded = URLEncoder.encode(nomeSeguro, StandardCharsets.UTF_8).replace("+", "%20");
+        return "inline; filename=\"" + nomeSeguro + "\"; filename*=UTF-8''" + encoded;
     }
 
     private byte[] montarRelatorioPdf(Cliente cliente, List<Reuniao> reunioes, YearMonth mes) {

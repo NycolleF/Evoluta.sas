@@ -102,7 +102,7 @@ export default function CalendarioPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <span className="muted">Nenhuma reuniao neste dia</span>
+                                <span className="muted">Sem reunioes</span>
                             )}
                         </article>
                     )

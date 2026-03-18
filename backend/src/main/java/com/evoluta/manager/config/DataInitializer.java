@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 @Configuration
 public class DataInitializer {
     @Bean
+    @ConditionalOnProperty(value = "app.seed.enabled", havingValue = "true")
     CommandLineRunner seedData(
             ClienteRepository clienteRepository,
             DemandaRepository demandaRepository,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../services/api';
+import { api, buildApiUrl } from '../services/api';
 import SearchField from '../components/SearchField';
 
 function hojeISO() {
@@ -21,8 +21,6 @@ function formatarData(data) {
 }
 
 export default function ReunioesPage({ clientes }) {
-    const base = api.defaults.baseURL || 'http://localhost:8081/api';
-
     const [form, setForm] = useState({
         clienteId: '',
         dataReuniao: hojeISO(),
@@ -56,7 +54,7 @@ export default function ReunioesPage({ clientes }) {
     async function carregarReunioes(mes = mesFiltro) {
         setCarregandoLista(true);
         try {
-            const resp = await api.get(`/reunioes?mes=${mes}`);
+            const resp = await api.get('/reunioes', { params: { mes } });
             setReunioes(resp.data || []);
         } catch {
             setReunioes([]);
@@ -107,7 +105,7 @@ export default function ReunioesPage({ clientes }) {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            setOk('Reuniao registrada com sucesso!');
+            setOk('Reuniao salva com sucesso.');
             setForm((prev) => ({
                 ...prev,
                 anotacoes: '',
@@ -115,7 +113,7 @@ export default function ReunioesPage({ clientes }) {
             }));
             carregarReunioes(mesFiltro);
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao conseguimos salvar a reuniao agora. Tente novamente.');
+            setErro(err?.response?.data?.mensagem || 'Nao foi possivel salvar a reuniao.');
         } finally {
             setLoading(false);
         }
@@ -134,7 +132,7 @@ export default function ReunioesPage({ clientes }) {
             return;
         }
 
-        const url = `${base}/reunioes/relatorio-pdf?clienteId=${id}&mes=${mesFiltro}`;
+        const url = buildApiUrl(`/reunioes/relatorio-pdf?clienteId=${id}&mes=${mesFiltro}`);
         window.open(url, '_blank');
     }
 
@@ -210,12 +208,12 @@ export default function ReunioesPage({ clientes }) {
                                 <tr key={r.id}>
                                     <td>{formatarData(r.dataReuniao)}</td>
                                     <td>{r.cliente?.nome || '-'}</td>
-                                    <td>{r.anotacoes || 'Sem anotacoes'}</td>
+                                    <td>{r.anotacoes || '-'}</td>
                                     <td>
                                         {r.arquivos?.length ? (
                                             <div className="anexos-inline">
                                                 {r.arquivos.map((a) => (
-                                                    <a key={a.id} href={`${base}/reunioes/arquivos/${a.id}`} target="_blank" rel="noreferrer">
+                                                    <a key={a.id} href={buildApiUrl(`/reunioes/arquivos/${a.id}`)} target="_blank" rel="noreferrer">
                                                         {a.nomeOriginal}
                                                     </a>
                                                 ))}

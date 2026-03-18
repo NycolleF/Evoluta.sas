@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -60,7 +59,7 @@ public class DashboardService {
         }
 
         data.put("progressoMedio", media);
-        data.put("clientesRecentes", clienteRepository.findAll(Sort.by(Sort.Direction.DESC, "criadoEm")).stream().limit(6).toList());
+        data.put("clientesRecentes", clienteRepository.findAll().stream().limit(6).toList());
         data.put("demandasHoje", demandaRepository.findByDataDemandaOrderByStatusAscPrioridadeDescCriadoEmAsc(LocalDate.now()));
         data.put("totalDemandasHoje", demandaRepository.countByDataDemanda(LocalDate.now()));
         return data;
