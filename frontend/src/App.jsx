@@ -106,17 +106,19 @@ export default function App() {
 
     return (
         <Layout user={user} onLogout={logout} pageTitle={pageTitle} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
-            {hash === '#cadastro-cliente' ? (
-                <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />
-            ) : hash === '#nova-demanda' ? (
-                <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />
-            ) : hash === '#reunioes' ? (
-                <ReunioesPage clientes={clientes} />
-            ) : hash === '#calendario' ? (
-                <CalendarioPage />
-            ) : (
-                <DashboardPage resumo={resumo} />
-            )}
+            <div key={hash} className="page-transition" aria-live="polite">
+                {hash === '#cadastro-cliente' ? (
+                    <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />
+                ) : hash === '#nova-demanda' ? (
+                    <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />
+                ) : hash === '#reunioes' ? (
+                    <ReunioesPage clientes={clientes} />
+                ) : hash === '#calendario' ? (
+                    <CalendarioPage />
+                ) : (
+                    <DashboardPage resumo={resumo} />
+                )}
+            </div>
         </Layout>
     );
 }

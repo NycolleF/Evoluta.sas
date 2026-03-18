@@ -34,6 +34,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -117,6 +118,7 @@ public class ReuniaoController {
     }
 
     @GetMapping("/relatorio-pdf")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> gerarRelatorioPdf(@RequestParam Integer clienteId, @RequestParam(required = false) String mes) {
         Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
         if (cliente == null) {
