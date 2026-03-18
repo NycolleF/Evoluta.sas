@@ -33,6 +33,85 @@ function formatarIndicador(valor, unidade) {
     return `${numero.toLocaleString('pt-BR')} ${unidade || ''}`.trim();
 }
 
+function Sparkline({ data }) {
+    const reversed = [...data].reverse();
+    const W = 240, H = 64, PAD = 8;
+    const values = reversed.map((d) => Number(d.porcentagem || 0));
+    const maxV = Math.max(...values, 1);
+    const minV = Math.min(...values, 0);
+    const range = maxV - minV || 1;
+    const w = W - PAD * 2;
+    const h = H - PAD * 2;
+    const n = reversed.length;
+    const toX = (i) => PAD + (n > 1 ? (i / (n - 1)) * w : w / 2);
+    const toY = (v) => PAD + (1 - (v - minV) / range) * h;
+    const pts = reversed.map((d, i) => `${toX(i)},${toY(Number(d.porcentagem || 0))}`).join(' ');
+    const lastX = toX(n - 1);
+    const lastY = toY(values[values.length - 1]);
+    const firstDate = formatarData(reversed[0]?.dataReferencia);
+    const lastDate = formatarData(reversed[n - 1]?.dataReferencia);
+
+    return (
+        <div className="sparkline-wrap">
+            <svg viewBox={`0 0 ${W} ${H}`} className="sparkline-svg" aria-hidden="true" preserveAspectRatio="none">
+                {n > 1 && (
+                    <polyline
+                        fill="rgba(56,161,105,0.13)"
+                        stroke="none"
+                        points={`${PAD},${PAD + h} ${pts} ${lastX},${PAD + h}`}
+                    />
+                )}
+                <polyline
+                    fill="none"
+                    stroke="var(--accent-strong)"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    points={pts}
+                />
+                {reversed.map((d, i) => (
+                    <circle
+                        key={i}
+                        cx={toX(i)}
+                        cy={toY(Number(d.porcentagem || 0))}
+                        r={i === n - 1 ? 4 : 2.5}
+                        fill="var(--accent-strong)"
+                        opacity={i === n - 1 ? 1 : 0.45}
+                    />
+                ))}
+            </svg>
+            <div className="sparkline-labels">
+                <span>{firstDate}</span>
+                <span>{lastDate} · <strong>{values[n - 1]}%</strong></span>
+            </div>
+        </div>
+    );
+}
+
+function KpiMiniBar({ indicadores }) {
+    const nums = indicadores.map((i) => Number(i.valor || 0));
+    const maxVal = Math.max(...nums, 0.001);
+    return (
+        <div className="drawer-list">
+            {indicadores.map((ind) => {
+                const num = Number(ind.valor || 0);
+                const pct = Math.min(100, (num / maxVal) * 100);
+                return (
+                    <div key={ind.id} className="kpi-mini-card">
+                        <div className="kpi-mini-head">
+                            <span>{ind.tipoKpi}</span>
+                            <strong>{formatarIndicador(ind.valor, ind.unidade)}</strong>
+                        </div>
+                        <div className="kpi-mini-bar-track">
+                            <div className="kpi-mini-bar-fill" style={{ width: `${pct}%` }} />
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function ClientesPage({ clientes, onClienteCriado, onClienteAtualizado }) {
     const [form, setForm] = useState(initialForm);
     const [editandoId, setEditandoId] = useState(null);
@@ -289,51 +368,66 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                                         <div className="etapas-progresso-fill" style={{ width: `${ficha.progresso?.porcentagem || 0}%` }} />
                                     </div>
                                     <div className="drawer-highlight-row">
-                                        <strong>{ficha.progresso?.porcentagem || 0}%</strong>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                            <strong>{ficha.progresso?.porcentagem || 0}%</strong>
+                                            {ficha.historico.length >= 2 && (() => {
+                                                const delta = ficha.historico[0].porcentagem - ficha.historico[1].porcentagem;
+                                                const cls = delta > 0 ? 'tendencia-up' : delta < 0 ? 'tendencia-down' : 'tendencia-flat';
+                                                const icon = delta > 0 ? '▲' : delta < 0 ? '▼' : '●';
+                                                return <span className={`tendencia-badge ${cls}`}>{icon} {Math.abs(delta)}pp</span>;
+                                            })()}
+                                        </div>
                                         <span>{ficha.progresso?.observacao || 'Sem observacao registrada.'}</span>
                                     </div>
                                 </div>
 
                                 <div className="drawer-panel">
                                     <h4>Etapas recentes</h4>
-                                    {ficha.etapas.length === 0 ? <p className="muted">Nenhuma etapa registrada.</p> : (
-                                        <div className="drawer-list">
-                                            {ficha.etapas.slice(0, 4).map((etapa) => (
-                                                <article key={etapa.id} className="drawer-list-item">
-                                                    <strong>{etapa.nomeEtapa}</strong>
-                                                    <span>{etapa.tipo} · {etapa.status}</span>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {ficha.etapas.length === 0 ? <p className="muted">Nenhuma etapa registrada.</p> : (() => {
+                                        const concluidas = ficha.etapas.filter((e) => e.status === 'concluida').length;
+                                        const total = ficha.etapas.length;
+                                        const pct = Math.round((concluidas / total) * 100);
+                                        return (
+                                            <>
+                                                <div className="etapas-mini-bar">
+                                                    <div className="etapas-mini-stats">
+                                                        <span>{concluidas}/{total} concluídas</span>
+                                                        <span>{pct}%</span>
+                                                    </div>
+                                                    <div className="etapas-mini-track">
+                                                        <div className="etapas-mini-fill" style={{ width: `${pct}%` }} />
+                                                    </div>
+                                                </div>
+                                                <div className="drawer-list">
+                                                    {ficha.etapas.slice(0, 4).map((etapa) => (
+                                                        <article key={etapa.id} className="drawer-list-item">
+                                                            <div className="etapa-dot-row">
+                                                                <span className={`etapa-status-dot etapa-status-dot--${etapa.status}`} />
+                                                                <strong>{etapa.nomeEtapa}</strong>
+                                                            </div>
+                                                            <span>{etapa.tipo} · {etapa.status}</span>
+                                                        </article>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div className="drawer-panel">
                                     <h4>KPIs recentes</h4>
-                                    {ficha.indicadores.length === 0 ? <p className="muted">Nenhum KPI registrado.</p> : (
-                                        <div className="drawer-list">
-                                            {ficha.indicadores.slice(0, 4).map((indicador) => (
-                                                <article key={indicador.id} className="drawer-list-item">
-                                                    <strong>{indicador.tipoKpi}</strong>
-                                                    <span>{formatarIndicador(indicador.valor, indicador.unidade)}</span>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {ficha.indicadores.length === 0
+                                        ? <p className="muted">Nenhum KPI registrado.</p>
+                                        : <KpiMiniBar indicadores={ficha.indicadores.slice(0, 4)} />
+                                    }
                                 </div>
 
                                 <div className="drawer-panel">
                                     <h4>Historico de progresso</h4>
-                                    {ficha.historico.length === 0 ? <p className="muted">Sem historico registrado.</p> : (
-                                        <div className="drawer-list">
-                                            {ficha.historico.slice(0, 4).map((item) => (
-                                                <article key={item.id} className="drawer-list-item">
-                                                    <strong>{item.porcentagem}%</strong>
-                                                    <span>{formatarData(item.dataReferencia)}</span>
-                                                </article>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {ficha.historico.length === 0
+                                        ? <p className="muted">Sem historico registrado.</p>
+                                        : <Sparkline data={ficha.historico} />
+                                    }
                                 </div>
 
                                 <div className="drawer-panel">
