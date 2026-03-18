@@ -2037,3 +2037,45 @@ tbody tr:hover {
     background: var(--accent-strong);
     transition: width 0.5s ease;
 }
+
+@media (max-width: 900px) {
+    .clientes-financeiro-table thead {
+        display: none;
+    }
+
+    .clientes-financeiro-table,
+    .clientes-financeiro-table tbody,
+    .clientes-financeiro-table tr,
+    .clientes-financeiro-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .clientes-financeiro-table tr {
+        padding: 10px 12px;
+        border: 1px solid var(--table-line);
+        border-radius: 14px;
+        margin-bottom: 10px;
+        background: color-mix(in srgb, var(--card-bg) 95%, white 5%);
+    }
+
+    .clientes-financeiro-table td {
+        border: 0;
+        padding: 8px 0;
+    }
+
+    .clientes-financeiro-table td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: .74rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--ink-soft);
+        margin-bottom: 4px;
+        font-weight: 700;
+    }
+
+    .clientes-financeiro-table td[data-label="Acoes"] .table-actions {
+        justify-content: flex-start;
+    }
+}

@@ -31,6 +31,15 @@ function formatarData(data) {
     return d.toLocaleDateString('pt-BR');
 }
 
+function primeiraEntradaMensal(servico) {
+    if (servico.tipoCobranca !== 'parcelado' || servico.formaPagamento !== 'por_mes') return null;
+    const base = servico.dataInicio ? new Date(servico.dataInicio) : new Date();
+    if (Number.isNaN(base.getTime())) return null;
+    const primeiro = new Date(base);
+    primeiro.setMonth(primeiro.getMonth() + 1);
+    return primeiro;
+}
+
 function pagamentoInfo(s) {
     const tipo = s.tipoCobranca || 'avista';
     if (tipo === 'avista') return { texto: 'A vista', cls: 'pagamento-tag--avista' };
@@ -39,7 +48,7 @@ function pagamentoInfo(s) {
     return { texto: `${n}x · ${moeda(Number(s.valor || 0) / n)}/mes`, cls: 'pagamento-tag--parcelado' };
 }
 
-export default function ServicosPage({ clientes }) {
+export default function ServicosPage({ clientes, onServicosChange }) {
     const [clienteSelecionado, setClienteSelecionado] = useState('');
     const [servicos, setServicos] = useState([]);
     const [loadingServicos, setLoadingServicos] = useState(false);
@@ -111,6 +120,16 @@ export default function ServicosPage({ clientes }) {
         if (!form.clienteId) { setErro('Selecione um cliente.'); return; }
         if (!form.nomeServico.trim()) { setErro('Informe o nome do servico.'); return; }
         if (!form.valor || Number(form.valor) < 0) { setErro('Informe um valor valido.'); return; }
+        if (form.tipoCobranca === 'parcelado') {
+            if (!form.numeroParcelas || Number(form.numeroParcelas) < 2) {
+                setErro('Informe o numero de parcelas (minimo 2).');
+                return;
+            }
+            if (!form.formaPagamento) {
+                setErro('Selecione como sera feito o pagamento parcelado.');
+                return;
+            }
+        }
 
         setErro('');
         setOk('');
@@ -132,6 +151,7 @@ export default function ServicosPage({ clientes }) {
             if (editandoId) {
                 const { data } = await api.put(`/servicos/${editandoId}`, payload);
                 setServicos((prev) => prev.map((s) => (s.id === data.id ? data : s)));
+                await onServicosChange?.();
                 setOk('Servico atualizado com sucesso.');
                 cancelar();
             } else {
@@ -139,11 +159,18 @@ export default function ServicosPage({ clientes }) {
                 if (String(data.cliente?.id) === String(clienteSelecionado)) {
                     setServicos((prev) => [data, ...prev]);
                 }
+                await onServicosChange?.();
                 setForm({ ...initialForm, clienteId: clienteSelecionado });
                 setOk('Servico cadastrado com sucesso.');
             }
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel salvar o servico.');
+            const apiMsg = err?.response?.data;
+            const mensagem =
+                (typeof apiMsg === 'string' && apiMsg) ||
+                apiMsg?.mensagem ||
+                `Erro ${err?.response?.status || ''}`.trim() ||
+                'Nao foi possivel salvar o servico.';
+            setErro(mensagem);
         } finally {
             setLoading(false);
         }
@@ -154,6 +181,7 @@ export default function ServicosPage({ clientes }) {
         try {
             await api.delete(`/servicos/${id}`);
             setServicos((prev) => prev.filter((s) => s.id !== id));
+            await onServicosChange?.();
         } catch {
             setErro('Nao foi possivel excluir o servico.');
         }
@@ -318,6 +346,16 @@ export default function ServicosPage({ clientes }) {
                                             <span className="servico-data">desde {formatarData(s.dataInicio)}</span>
                                         )}
                                     </div>
+
+                                    {(() => {
+                                        const primeiro = primeiraEntradaMensal(s);
+                                        if (!primeiro) return null;
+                                        return (
+                                            <span className="servico-data">
+                                                Primeira entrada: {primeiro.toLocaleDateString('pt-BR')}
+                                            </span>
+                                        );
+                                    })()}
 
                                     <div className="table-actions">
                                         <button

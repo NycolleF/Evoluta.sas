@@ -3,6 +3,9 @@ package com.evoluta.manager.service;
 import com.evoluta.manager.model.StatusCliente;
 import com.evoluta.manager.model.StatusEtapa;
 import com.evoluta.manager.model.StatusServico;
+import com.evoluta.manager.model.FormaPagamento;
+import com.evoluta.manager.model.Servico;
+import com.evoluta.manager.model.TipoCobranca;
 import com.evoluta.manager.repository.ClienteRepository;
 import com.evoluta.manager.repository.DemandaRepository;
 import com.evoluta.manager.repository.EtapaRepository;
@@ -13,9 +16,11 @@ import com.evoluta.manager.model.Progresso;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -69,6 +74,48 @@ public class DashboardService {
         data.put("totalDemandasHoje", demandaRepository.countByDataDemanda(LocalDate.now()));
 
         // Receita por cliente (servicos ativos)
+        List<Servico> servicosAtivos = servicoRepository.findAll().stream()
+            .filter(s -> s.getStatus() == StatusServico.ativo)
+            .toList();
+
+        YearMonth mesAtual = YearMonth.now();
+
+        BigDecimal recebimentoMensalSemAdiantamento = servicosAtivos.stream()
+            .filter(s -> s.getTipoCobranca() == TipoCobranca.parcelado && s.getFormaPagamento() == FormaPagamento.por_mes)
+            .filter(s -> {
+                LocalDate inicio = s.getDataInicio() != null ? s.getDataInicio() : LocalDate.now();
+                YearMonth primeiroMesRecebimento = YearMonth.from(inicio.plusMonths(1));
+                return !mesAtual.isBefore(primeiroMesRecebimento);
+            })
+            .map(s -> {
+                BigDecimal valor = s.getValor() != null ? s.getValor() : BigDecimal.ZERO;
+                int parcelas = (s.getNumeroParcelas() != null && s.getNumeroParcelas() > 0) ? s.getNumeroParcelas() : 1;
+                return valor.divide(BigDecimal.valueOf(parcelas), 2, RoundingMode.HALF_UP);
+            })
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        data.put("recebimentoMensalSemAdiantamento", recebimentoMensalSemAdiantamento);
+
+        Map<Integer, BigDecimal> recebimentoMensalPorCliente = servicosAtivos.stream()
+            .filter(s -> s.getTipoCobranca() == TipoCobranca.parcelado && s.getFormaPagamento() == FormaPagamento.por_mes)
+            .filter(s -> {
+                LocalDate inicio = s.getDataInicio() != null ? s.getDataInicio() : LocalDate.now();
+                YearMonth primeiroMesRecebimento = YearMonth.from(inicio.plusMonths(1));
+                return !mesAtual.isBefore(primeiroMesRecebimento);
+            })
+            .collect(Collectors.groupingBy(
+                s -> s.getCliente().getId(),
+                Collectors.reducing(
+                    BigDecimal.ZERO,
+                    s -> {
+                        BigDecimal valor = s.getValor() != null ? s.getValor() : BigDecimal.ZERO;
+                        int parcelas = (s.getNumeroParcelas() != null && s.getNumeroParcelas() > 0) ? s.getNumeroParcelas() : 1;
+                        return valor.divide(BigDecimal.valueOf(parcelas), 2, RoundingMode.HALF_UP);
+                    },
+                    BigDecimal::add
+                )
+            ));
+
         List<Object[]> receitaRows = servicoRepository.receitaAtivaAgrupadaPorCliente(StatusServico.ativo);
         BigDecimal receitaTotal = receitaRows.stream()
             .map(r -> (BigDecimal) r[3])
@@ -82,6 +129,7 @@ public class DashboardService {
             m.put("empresa", row[2]);
             m.put("receitaAtiva", row[3]);
             m.put("totalServicos", row[4]);
+            m.put("recebimentoMensal", recebimentoMensalPorCliente.getOrDefault((Integer) row[0], BigDecimal.ZERO));
             return m;
         }).toList();
         data.put("receitaPorCliente", receitaPorCliente);

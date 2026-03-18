@@ -135,7 +135,7 @@ export default function App() {
         '#etapas': { title: 'Etapas de Mentoria', render: () => <EtapasPage clientes={clientes} /> },
         '#indicadores': { title: 'Indicadores e KPIs', render: () => <IndicadoresPage clientes={clientes} /> },
         '#progresso': { title: 'Progresso do Cliente', render: () => <ProgressoPage clientes={clientes} /> },
-        '#servicos': { title: 'Servicos e Valores', render: () => <ServicosPage clientes={clientes} /> }
+        '#servicos': { title: 'Servicos e Valores', render: () => <ServicosPage clientes={clientes} onServicosChange={carregarDados} /> }
     };
 
     const page = PAGE_CONFIG[hash] || PAGE_CONFIG['#dashboard'];

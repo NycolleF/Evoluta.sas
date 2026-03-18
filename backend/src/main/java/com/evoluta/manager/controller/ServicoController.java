@@ -1,5 +1,6 @@
 package com.evoluta.manager.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.evoluta.manager.dto.ServicoRequest;
 import com.evoluta.manager.model.Cliente;
+import com.evoluta.manager.model.FormaPagamento;
 import com.evoluta.manager.model.Servico;
 import com.evoluta.manager.model.TipoCobranca;
 import com.evoluta.manager.repository.ClienteRepository;
@@ -60,6 +62,7 @@ public class ServicoController {
         s.setFormaPagamento(request.getFormaPagamento());
         s.setNumeroParcelas(request.getNumeroParcelas());
         s.setDataInicio(request.getDataInicio());
+        normalizarRecebimento(s);
         s.setCriadoEm(LocalDateTime.now());
 
         return ResponseEntity.ok(servicoRepository.save(s));
@@ -81,6 +84,7 @@ public class ServicoController {
             if (request.getTipoCobranca() != null) s.setTipoCobranca(request.getTipoCobranca());
             s.setFormaPagamento(request.getFormaPagamento());
             s.setNumeroParcelas(request.getNumeroParcelas());
+            normalizarRecebimento(s);
             return ResponseEntity.ok((Object) servicoRepository.save(s));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -92,5 +96,17 @@ public class ServicoController {
         }
         servicoRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private void normalizarRecebimento(Servico s) {
+        // Para cobranca mensal sem adiantamento, usamos dataInicio como ancora da cobranca.
+        if (s.getTipoCobranca() == TipoCobranca.parcelado && s.getFormaPagamento() == FormaPagamento.por_mes) {
+            if (s.getDataInicio() == null) {
+                s.setDataInicio(LocalDate.now());
+            }
+            return;
+        }
+
+        // Nos demais tipos, dataInicio pode ficar como enviada pelo usuario.
     }
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import SearchField from '../components/SearchField';
 
@@ -31,6 +31,10 @@ function formatarIndicador(valor, unidade) {
         return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     return `${numero.toLocaleString('pt-BR')} ${unidade || ''}`.trim();
+}
+
+function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function Sparkline({ data }) {
@@ -122,6 +126,32 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState('');
     const [ok, setOk] = useState('');
+    const [financeiroPorCliente, setFinanceiroPorCliente] = useState({});
+
+    useEffect(() => {
+        let ativo = true;
+
+        api.get('/dashboard/resumo')
+            .then((resp) => {
+                if (!ativo) return;
+                const mapa = {};
+                (resp.data?.receitaPorCliente || []).forEach((item) => {
+                    mapa[item.clienteId] = {
+                        receitaAtiva: Number(item.receitaAtiva || 0),
+                        recebimentoMensal: Number(item.recebimentoMensal || 0)
+                    };
+                });
+                setFinanceiroPorCliente(mapa);
+            })
+            .catch(() => {
+                if (!ativo) return;
+                setFinanceiroPorCliente({});
+            });
+
+        return () => {
+            ativo = false;
+        };
+    }, [clientes]);
 
     const clientesOrdenados = useMemo(
         () => [...clientes].sort((a, b) => new Date(b.criadoEm || 0) - new Date(a.criadoEm || 0)),
@@ -175,20 +205,46 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
         setFichaLoading(true);
 
         try {
-            const [etapasResp, indicadoresResp, progressoResp, historicoResp, reunioesResp] = await Promise.all([
+            const [etapasResp, indicadoresResp, progressoResp, historicoResp, reunioesResp, servicosResp] = await Promise.all([
                 api.get('/etapas', { params: { clienteId: cliente.id } }).catch(() => ({ data: [] })),
                 api.get('/indicadores', { params: { clienteId: cliente.id } }).catch(() => ({ data: [] })),
                 api.get(`/progresso/${cliente.id}`).catch(() => ({ data: null })),
                 api.get(`/progresso/historico/${cliente.id}`).catch(() => ({ data: [] })),
-                api.get(`/reunioes/recentes/${cliente.id}`).catch(() => ({ data: [] }))
+                api.get(`/reunioes/recentes/${cliente.id}`).catch(() => ({ data: [] })),
+                api.get('/servicos', { params: { clienteId: cliente.id } }).catch(() => ({ data: [] }))
             ]);
+
+            const servicos = servicosResp.data || [];
+            const valorContratadoTotal = servicos
+                .reduce((acc, s) => acc + Number(s.valor || 0), 0);
+            const recebimentoMensalSemAdiantamento = servicos
+                .filter((s) => s.status === 'ativo' && s.tipoCobranca === 'parcelado' && s.formaPagamento === 'por_mes')
+                .filter((s) => {
+                    const base = s.dataInicio ? new Date(s.dataInicio) : new Date();
+                    if (Number.isNaN(base.getTime())) return false;
+                    const primeiroMes = new Date(base);
+                    primeiroMes.setMonth(primeiroMes.getMonth() + 1);
+                    const agora = new Date();
+                    const chaveAgora = agora.getFullYear() * 100 + agora.getMonth();
+                    const chavePrimeiro = primeiroMes.getFullYear() * 100 + primeiroMes.getMonth();
+                    return chaveAgora >= chavePrimeiro;
+                })
+                .reduce((acc, s) => {
+                    const valor = Number(s.valor || 0);
+                    const parcelas = Number(s.numeroParcelas || 1);
+                    const mensal = parcelas > 0 ? valor / parcelas : valor;
+                    return acc + mensal;
+                }, 0);
 
             setFicha({
                 etapas: etapasResp.data || [],
                 indicadores: indicadoresResp.data || [],
                 progresso: progressoResp.data || null,
                 historico: historicoResp.data || [],
-                reunioes: reunioesResp.data || []
+                reunioes: reunioesResp.data || [],
+                servicos,
+                valorContratadoTotal,
+                recebimentoMensalSemAdiantamento
             });
         } finally {
             setFichaLoading(false);
@@ -284,29 +340,33 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                 />
-                <table>
+                <table className="clientes-financeiro-table">
                     <thead>
                         <tr>
                             <th>Nome</th>
                             <th>Empresa</th>
                             <th>Contato</th>
                             <th>Status</th>
+                            <th>Valor contratado</th>
+                            <th>Recebimento no mes</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientesFiltrados.length === 0 ? (
                             <tr>
-                                <td colSpan={5}>Nenhum cliente encontrado.</td>
+                                <td colSpan={7}>Nenhum cliente encontrado.</td>
                             </tr>
                         ) : (
                             clientesFiltrados.map((c) => (
                                 <tr key={c.id}>
-                                    <td>{c.nome}</td>
-                                    <td>{c.empresa || '-'}</td>
-                                    <td>{c.contato || c.email || '-'}</td>
-                                    <td><span className={statusClass(c.status)}>{c.status}</span></td>
-                                    <td>
+                                    <td data-label="Nome">{c.nome}</td>
+                                    <td data-label="Empresa">{c.empresa || '-'}</td>
+                                    <td data-label="Contato">{c.contato || c.email || '-'}</td>
+                                    <td data-label="Status"><span className={statusClass(c.status)}>{c.status}</span></td>
+                                    <td data-label="Valor contratado">{formatarMoeda(financeiroPorCliente[c.id]?.receitaAtiva || 0)}</td>
+                                    <td data-label="Recebimento no mes">{formatarMoeda(financeiroPorCliente[c.id]?.recebimentoMensal || 0)}</td>
+                                    <td data-label="Acoes">
                                         <div className="table-actions">
                                             <button
                                                 type="button"
@@ -358,6 +418,8 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                                         <div><span>Status</span><strong>{clienteFicha.status}</strong></div>
                                         <div><span>Contato</span><strong>{clienteFicha.contato || '-'}</strong></div>
                                         <div><span>E-mail</span><strong>{clienteFicha.email || '-'}</strong></div>
+                                        <div><span>Valor contratado</span><strong>{formatarMoeda(ficha.valorContratadoTotal)}</strong></div>
+                                        <div><span>Recebimento no mes (sem adiantar)</span><strong>{formatarMoeda(ficha.recebimentoMensalSemAdiantamento)}</strong></div>
                                         <div><span>Observacoes</span><strong>{clienteFicha.observacoes || '-'}</strong></div>
                                     </div>
                                 </div>

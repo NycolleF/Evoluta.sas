@@ -69,6 +69,10 @@ export default function DashboardPage({ resumo, onResumoChange }) {
                     <small>Receita total ativa</small>
                     <strong>{moeda(resumo?.receitaTotal ?? 0)}</strong>
                 </article>
+                <article className="tile tile--accent">
+                    <small>Recebimento no mes (sem adiantar)</small>
+                    <strong>{moeda(resumo?.recebimentoMensalSemAdiantamento ?? 0)}</strong>
+                </article>
             </div>
 
             <div className="card">
@@ -88,6 +92,9 @@ export default function DashboardPage({ resumo, onResumoChange }) {
                                         <span className="receita-badge">{r.totalServicos} serv.</span>
                                     </div>
                                     <div className="receita-valor">{moeda(r.receitaAtiva)}</div>
+                                    <span className="muted" style={{ fontSize: '.8rem' }}>
+                                        No mes (sem adiantar): {moeda(r.recebimentoMensal ?? 0)}
+                                    </span>
                                     <div className="receita-bar-track">
                                         <div
                                             className="receita-bar-fill"
