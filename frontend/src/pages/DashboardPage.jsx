@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { api } from '../services/api';
+
 function badgeClass(value) {
     const raw = String(value || '').toLowerCase();
     if (raw.includes('alta') || raw.includes('ativo') || raw.includes('conclu')) return 'badge badge-positive';
@@ -7,8 +10,29 @@ function badgeClass(value) {
     return 'badge';
 }
 
-export default function DashboardPage({ resumo }) {
-    const demandas = resumo?.demandasHoje || [];
+export default function DashboardPage({ resumo, onResumoChange }) {
+    const [demandas, setDemandas] = useState(() => resumo?.demandasHoje || []);
+    const [savingId, setSavingId] = useState(null);
+
+    const lista = resumo?.demandasHoje || demandas;
+
+    async function atualizarDemanda(id, campo, valor) {
+        setSavingId(id);
+        try {
+            const { data } = await api.patch(`/demandas/${id}`, { [campo]: valor });
+            onResumoChange?.((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    demandasHoje: (prev.demandasHoje || []).map((d) => d.id === id ? data : d)
+                };
+            });
+        } catch {
+            // silent — user can try again
+        } finally {
+            setSavingId(null);
+        }
+    }
 
     return (
         <div className="content">
@@ -51,17 +75,42 @@ export default function DashboardPage({ resumo }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {demandas.length === 0 ? (
+                        {lista.length === 0 ? (
                             <tr>
                                 <td colSpan={4}>Nenhuma demanda para hoje.</td>
                             </tr>
                         ) : (
-                            demandas.map((d) => (
-                                <tr key={d.id}>
+                            lista.map((d) => (
+                                <tr key={d.id} className={savingId === d.id ? 'row-saving' : ''}>
                                     <td>{d.cliente?.nome || '-'}</td>
-                                    <td>{d.titulo}</td>
-                                    <td><span className={badgeClass(d.prioridade)}>{d.prioridade}</span></td>
-                                    <td><span className={badgeClass(d.status)}>{d.status}</span></td>
+                                    <td>
+                                        <strong style={{ display: 'block' }}>{d.titulo}</strong>
+                                        {d.descricao ? <span className="muted" style={{ fontSize: '.82rem' }}>{d.descricao}</span> : null}
+                                    </td>
+                                    <td>
+                                        <select
+                                            className="inline-select"
+                                            value={d.prioridade}
+                                            onChange={(e) => atualizarDemanda(d.id, 'prioridade', e.target.value)}
+                                            aria-label="Alterar prioridade"
+                                        >
+                                            <option value="baixa">Baixa</option>
+                                            <option value="media">Media</option>
+                                            <option value="alta">Alta</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select
+                                            className="inline-select"
+                                            value={d.status}
+                                            onChange={(e) => atualizarDemanda(d.id, 'status', e.target.value)}
+                                            aria-label="Alterar status"
+                                        >
+                                            <option value="pendente">Pendente</option>
+                                            <option value="em_andamento">Em andamento</option>
+                                            <option value="concluida">Concluida</option>
+                                        </select>
+                                    </td>
                                 </tr>
                             ))
                         )}
@@ -71,3 +120,4 @@ export default function DashboardPage({ resumo }) {
         </div>
     );
 }
+

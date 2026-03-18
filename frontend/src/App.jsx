@@ -7,6 +7,7 @@ import ClientesPage from './pages/ClientesPage';
 import NovaDemandaPage from './pages/NovaDemandaPage';
 import ReunioesPage from './pages/ReunioesPage';
 import CalendarioPage from './pages/CalendarioPage';
+import EtapasPage from './pages/EtapasPage';
 
 export default function App() {
     const [user, setUser] = useState(() => {
@@ -68,6 +69,10 @@ export default function App() {
         });
     }
 
+    function handleClienteAtualizado(clienteAtualizado) {
+        setClientes((prev) => prev.map((c) => c.id === clienteAtualizado.id ? clienteAtualizado : c));
+    }
+
     function handleDemandaCriada() {
         carregarDados();
         window.location.hash = '#dashboard';
@@ -93,31 +98,21 @@ export default function App() {
         return <LoginPage onLogin={handleLogin} />;
     }
 
-    const pageTitle =
-        hash === '#cadastro-cliente'
-            ? 'Cadastro de Cliente'
-            : hash === '#nova-demanda'
-                ? 'Criar Demanda'
-                : hash === '#reunioes'
-                    ? 'Reunioes e Anotacoes'
-                    : hash === '#calendario'
-                        ? 'Calendario de Reunioes'
-                        : 'Demandas do Dia';
+    const PAGE_CONFIG = {
+        '#dashboard': { title: 'Demandas do Dia', render: () => <DashboardPage resumo={resumo} onResumoChange={setResumo} /> },
+        '#cadastro-cliente': { title: 'Clientes', render: () => <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} onClienteAtualizado={handleClienteAtualizado} /> },
+        '#nova-demanda': { title: 'Criar Demanda', render: () => <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} /> },
+        '#reunioes': { title: 'Reunioes e Anotacoes', render: () => <ReunioesPage clientes={clientes} /> },
+        '#calendario': { title: 'Calendario de Reunioes', render: () => <CalendarioPage /> },
+        '#etapas': { title: 'Etapas de Mentoria', render: () => <EtapasPage clientes={clientes} /> }
+    };
+
+    const page = PAGE_CONFIG[hash] || PAGE_CONFIG['#dashboard'];
 
     return (
-        <Layout user={user} onLogout={logout} pageTitle={pageTitle} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
+        <Layout user={user} onLogout={logout} pageTitle={page.title} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
             <div key={hash} className="page-transition" aria-live="polite">
-                {hash === '#cadastro-cliente' ? (
-                    <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />
-                ) : hash === '#nova-demanda' ? (
-                    <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />
-                ) : hash === '#reunioes' ? (
-                    <ReunioesPage clientes={clientes} />
-                ) : hash === '#calendario' ? (
-                    <CalendarioPage />
-                ) : (
-                    <DashboardPage resumo={resumo} />
-                )}
+                {page.render()}
             </div>
         </Layout>
     );

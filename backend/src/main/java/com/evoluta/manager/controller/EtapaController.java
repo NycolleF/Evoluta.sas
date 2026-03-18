@@ -34,7 +34,7 @@ public class EtapaController {
     public ResponseEntity<?> criar(@Valid @RequestBody EtapaRequest request) {
         Cliente cliente = clienteRepository.findById(request.getClienteId()).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body("Cliente não encontrado.");
+            return ResponseEntity.badRequest().body("Cliente nao encontrado.");
         }
 
         Etapa e = new Etapa();
@@ -47,5 +47,22 @@ public class EtapaController {
         e.setCriadoEm(LocalDateTime.now());
 
         return ResponseEntity.ok(etapaRepository.save(e));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizar(@PathVariable Integer id, @Valid @RequestBody EtapaRequest request) {
+        return etapaRepository.findById(id).map(e -> {
+            Cliente cliente = clienteRepository.findById(request.getClienteId()).orElse(null);
+            if (cliente == null) {
+                return ResponseEntity.badRequest().body((Object) "Cliente nao encontrado.");
+            }
+            e.setCliente(cliente);
+            e.setNomeEtapa(request.getNomeEtapa());
+            if (request.getDescricao() != null) e.setDescricao(request.getDescricao());
+            if (request.getTipo() != null) e.setTipo(request.getTipo());
+            if (request.getDataEtapa() != null) e.setDataEtapa(request.getDataEtapa());
+            if (request.getStatus() != null) e.setStatus(request.getStatus());
+            return ResponseEntity.ok((Object) etapaRepository.save(e));
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

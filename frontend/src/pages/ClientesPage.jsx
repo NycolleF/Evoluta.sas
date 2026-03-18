@@ -18,11 +18,13 @@ function statusClass(status) {
     return 'badge';
 }
 
-export default function ClientesPage({ clientes, onClienteCriado }) {
+export default function ClientesPage({ clientes, onClienteCriado, onClienteAtualizado }) {
     const [form, setForm] = useState(initialForm);
+    const [editandoId, setEditandoId] = useState(null);
     const [busca, setBusca] = useState('');
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState('');
+    const [ok, setOk] = useState('');
 
     const clientesOrdenados = useMemo(
         () => [...clientes].sort((a, b) => new Date(b.criadoEm || 0) - new Date(a.criadoEm || 0)),
@@ -46,6 +48,28 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
         setForm((prev) => ({ ...prev, [name]: value }));
     }
 
+    function iniciarEdicao(cliente) {
+        setForm({
+            nome: cliente.nome || '',
+            empresa: cliente.empresa || '',
+            contato: cliente.contato || '',
+            email: cliente.email || '',
+            status: cliente.status || 'ativo',
+            observacoes: cliente.observacoes || ''
+        });
+        setEditandoId(cliente.id);
+        setErro('');
+        setOk('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelarEdicao() {
+        setForm(initialForm);
+        setEditandoId(null);
+        setErro('');
+        setOk('');
+    }
+
     async function onSubmit(e) {
         e.preventDefault();
         if (!form.nome.trim()) {
@@ -54,6 +78,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
         }
 
         setErro('');
+        setOk('');
         setLoading(true);
         try {
             const payload = {
@@ -65,11 +90,19 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                 observacoes: form.observacoes.trim() || null
             };
 
-            const { data } = await api.post('/clientes', payload);
-            setForm(initialForm);
-            onClienteCriado?.(data);
+            if (editandoId) {
+                const { data } = await api.put(`/clientes/${editandoId}`, payload);
+                onClienteAtualizado?.(data);
+                setOk('Cliente atualizado com sucesso.');
+                cancelarEdicao();
+            } else {
+                const { data } = await api.post('/clientes', payload);
+                setForm(initialForm);
+                setOk('Cliente cadastrado com sucesso.');
+                onClienteCriado?.(data);
+            }
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel cadastrar o cliente.');
+            setErro(err?.response?.data?.mensagem || 'Nao foi possivel salvar o cliente.');
         } finally {
             setLoading(false);
         }
@@ -78,8 +111,14 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
     return (
         <div className="content">
             <div className="card">
-                <h3>Novo Cliente</h3>
+                <div className="toolbar">
+                    <h3>{editandoId ? 'Editar Cliente' : 'Novo Cliente'}</h3>
+                    {editandoId ? (
+                        <button type="button" className="btn-cancel" onClick={cancelarEdicao}>Cancelar edição</button>
+                    ) : null}
+                </div>
                 {erro ? <div className="error">{erro}</div> : null}
+                {ok ? <div className="success">{ok}</div> : null}
                 <form className="form-grid" onSubmit={onSubmit}>
                     <input name="nome" placeholder="Nome*" value={form.nome} onChange={onChange} required />
                     <input name="empresa" placeholder="Empresa" value={form.empresa} onChange={onChange} />
@@ -98,7 +137,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                         rows={3}
                     />
                     <button className="primary" disabled={loading} type="submit">
-                        {loading ? 'Salvando...' : 'Cadastrar Cliente'}
+                        {loading ? 'Salvando...' : editandoId ? 'Salvar alteracoes' : 'Cadastrar Cliente'}
                     </button>
                 </form>
             </div>
@@ -117,12 +156,13 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                             <th>Empresa</th>
                             <th>Contato</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientesFiltrados.length === 0 ? (
                             <tr>
-                                <td colSpan={4}>Nenhum cliente encontrado.</td>
+                                <td colSpan={5}>Nenhum cliente encontrado.</td>
                             </tr>
                         ) : (
                             clientesFiltrados.map((c) => (
@@ -131,6 +171,17 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                                     <td>{c.empresa || '-'}</td>
                                     <td>{c.contato || c.email || '-'}</td>
                                     <td><span className={statusClass(c.status)}>{c.status}</span></td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className="btn-icon"
+                                            onClick={() => iniciarEdicao(c)}
+                                            title="Editar cliente"
+                                            aria-label={`Editar ${c.nome}`}
+                                        >
+                                            ✎
+                                        </button>
+                                    </td>
                                 </tr>
                             ))
                         )}

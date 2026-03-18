@@ -6,8 +6,9 @@ function navClass(currentHash, targetHash) {
 
 const menuItems = [
     { href: '#dashboard', label: 'Principal', icon: '◌' },
-    { href: '#cadastro-cliente', label: 'Cadastro Cliente', icon: '◫' },
+    { href: '#cadastro-cliente', label: 'Clientes', icon: '◫' },
     { href: '#nova-demanda', label: 'Criar Demanda', icon: '✦' },
+    { href: '#etapas', label: 'Etapas', icon: '◈' },
     { href: '#reunioes', label: 'Reunioes', icon: '◍' },
     { href: '#calendario', label: 'Calendario', icon: '▣' }
 ];
