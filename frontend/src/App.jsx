@@ -72,7 +72,32 @@ export default function App() {
     }
 
     function handleClienteAtualizado(clienteAtualizado) {
-        setClientes((prev) => prev.map((c) => c.id === clienteAtualizado.id ? clienteAtualizado : c));
+        let statusAnterior = null;
+
+        setClientes((prev) => prev.map((c) => {
+            if (c.id === clienteAtualizado.id) {
+                statusAnterior = c.status;
+                return clienteAtualizado;
+            }
+            return c;
+        }));
+
+        setResumo((prev) => {
+            if (!prev || !statusAnterior || statusAnterior === clienteAtualizado.status) {
+                return prev;
+            }
+
+            const ativos = Math.max(0, (prev.ativos || 0) + (clienteAtualizado.status === 'ativo' ? 1 : 0) - (statusAnterior === 'ativo' ? 1 : 0));
+            const pausados = Math.max(0, (prev.pausados || 0) + (clienteAtualizado.status === 'pausado' ? 1 : 0) - (statusAnterior === 'pausado' ? 1 : 0));
+            const finalizados = Math.max(0, (prev.finalizados || 0) + (clienteAtualizado.status === 'finalizado' ? 1 : 0) - (statusAnterior === 'finalizado' ? 1 : 0));
+
+            return {
+                ...prev,
+                ativos,
+                pausados,
+                finalizados
+            };
+        });
     }
 
     function handleDemandaCriada() {

@@ -18,6 +18,21 @@ function statusClass(status) {
     return 'badge';
 }
 
+function formatarData(data) {
+    if (!data) return '-';
+    const valor = new Date(data);
+    if (Number.isNaN(valor.getTime())) return String(data);
+    return valor.toLocaleDateString('pt-BR');
+}
+
+function formatarIndicador(valor, unidade) {
+    const numero = Number(valor || 0);
+    if ((unidade || '').toLowerCase() === 'r$') {
+        return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    return `${numero.toLocaleString('pt-BR')} ${unidade || ''}`.trim();
+}
+
 export default function ClientesPage({ clientes, onClienteCriado, onClienteAtualizado }) {
     const [form, setForm] = useState(initialForm);
     const [editandoId, setEditandoId] = useState(null);
@@ -66,15 +81,18 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function cancelarEdicao() {
+    function cancelarEdicao(limparMensagens = true) {
         setForm(initialForm);
         setEditandoId(null);
-        setErro('');
-        setOk('');
+        if (limparMensagens) {
+            setErro('');
+            setOk('');
+        }
     }
 
     async function abrirFicha(cliente) {
         setClienteFicha(cliente);
+        setFicha(null);
         setFichaLoading(true);
 
         try {
@@ -128,7 +146,11 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                 const { data } = await api.put(`/clientes/${editandoId}`, payload);
                 onClienteAtualizado?.(data);
                 setOk('Cliente atualizado com sucesso.');
-                cancelarEdicao();
+                cancelarEdicao(false);
+
+                if (clienteFicha?.id === data.id) {
+                    await abrirFicha(data);
+                }
             } else {
                 const { data } = await api.post('/clientes', payload);
                 setForm(initialForm);
@@ -293,7 +315,21 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                                             {ficha.indicadores.slice(0, 4).map((indicador) => (
                                                 <article key={indicador.id} className="drawer-list-item">
                                                     <strong>{indicador.tipoKpi}</strong>
-                                                    <span>{indicador.valor} {indicador.unidade || ''}</span>
+                                                    <span>{formatarIndicador(indicador.valor, indicador.unidade)}</span>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="drawer-panel">
+                                    <h4>Historico de progresso</h4>
+                                    {ficha.historico.length === 0 ? <p className="muted">Sem historico registrado.</p> : (
+                                        <div className="drawer-list">
+                                            {ficha.historico.slice(0, 4).map((item) => (
+                                                <article key={item.id} className="drawer-list-item">
+                                                    <strong>{item.porcentagem}%</strong>
+                                                    <span>{formatarData(item.dataReferencia)}</span>
                                                 </article>
                                             ))}
                                         </div>
@@ -306,7 +342,7 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                                         <div className="drawer-list">
                                             {ficha.reunioes.map((reuniao) => (
                                                 <article key={reuniao.id} className="drawer-list-item">
-                                                    <strong>{reuniao.dataReuniao}</strong>
+                                                    <strong>{formatarData(reuniao.dataReuniao)}</strong>
                                                     <span>{reuniao.anotacoes || 'Sem anotacoes.'}</span>
                                                 </article>
                                             ))}
