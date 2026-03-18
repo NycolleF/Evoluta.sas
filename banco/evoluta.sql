@@ -122,6 +122,23 @@ CREATE TABLE IF NOT EXISTS reuniao_arquivos (
     FOREIGN KEY (reuniao_id) REFERENCES reunioes(id) ON DELETE CASCADE
 );
 
+-- Tabela de serviços e valores por cliente
+CREATE TABLE IF NOT EXISTS servicos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    nome_servico VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    valor DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    status ENUM('ativo', 'pausado', 'cancelado') DEFAULT 'ativo',
+    tipo_cobranca ENUM('avista', 'parcelado') DEFAULT 'avista',
+    forma_pagamento ENUM('adiantado', 'por_mes') DEFAULT NULL,
+    numero_parcelas INT DEFAULT NULL,
+    data_inicio DATE,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    INDEX idx_servicos_cliente (cliente_id)
+);
+
 -- Tabela de relatórios gerados
 CREATE TABLE IF NOT EXISTS relatorios (
     id INT AUTO_INCREMENT PRIMARY KEY,

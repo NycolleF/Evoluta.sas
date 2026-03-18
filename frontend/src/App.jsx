@@ -10,6 +10,7 @@ import CalendarioPage from './pages/CalendarioPage';
 import EtapasPage from './pages/EtapasPage';
 import IndicadoresPage from './pages/IndicadoresPage';
 import ProgressoPage from './pages/ProgressoPage';
+import ServicosPage from './pages/ServicosPage';
 
 export default function App() {
     const [user, setUser] = useState(() => {
@@ -133,7 +134,8 @@ export default function App() {
         '#calendario': { title: 'Calendario de Reunioes', render: () => <CalendarioPage /> },
         '#etapas': { title: 'Etapas de Mentoria', render: () => <EtapasPage clientes={clientes} /> },
         '#indicadores': { title: 'Indicadores e KPIs', render: () => <IndicadoresPage clientes={clientes} /> },
-        '#progresso': { title: 'Progresso do Cliente', render: () => <ProgressoPage clientes={clientes} /> }
+        '#progresso': { title: 'Progresso do Cliente', render: () => <ProgressoPage clientes={clientes} /> },
+        '#servicos': { title: 'Servicos e Valores', render: () => <ServicosPage clientes={clientes} /> }
     };
 
     const page = PAGE_CONFIG[hash] || PAGE_CONFIG['#dashboard'];

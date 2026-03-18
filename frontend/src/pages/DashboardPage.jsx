@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 
+function moeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 function badgeClass(value) {
     const raw = String(value || '').toLowerCase();
     if (raw.includes('alta') || raw.includes('ativo') || raw.includes('conclu')) return 'badge badge-positive';
@@ -61,6 +65,42 @@ export default function DashboardPage({ resumo, onResumoChange }) {
                     <small>Progresso medio</small>
                     <strong>{resumo?.progressoMedio ?? 0}%</strong>
                 </article>
+                <article className="tile tile--accent">
+                    <small>Receita total ativa</small>
+                    <strong>{moeda(resumo?.receitaTotal ?? 0)}</strong>
+                </article>
+            </div>
+
+            <div className="card">
+                <h3>Receita por Cliente</h3>
+                {(!resumo?.receitaPorCliente || resumo.receitaPorCliente.length === 0) ? (
+                    <p className="muted">Nenhum servico ativo cadastrado ainda.</p>
+                ) : (
+                    <>
+                        <div className="receita-grid">
+                            {resumo.receitaPorCliente.map((r) => (
+                                <article key={r.clienteId} className="receita-card">
+                                    <div className="receita-card-top">
+                                        <div>
+                                            <strong>{r.nomeCliente}</strong>
+                                            {r.empresa && <span className="muted" style={{ fontSize: '.82rem', display: 'block' }}>{r.empresa}</span>}
+                                        </div>
+                                        <span className="receita-badge">{r.totalServicos} serv.</span>
+                                    </div>
+                                    <div className="receita-valor">{moeda(r.receitaAtiva)}</div>
+                                    <div className="receita-bar-track">
+                                        <div
+                                            className="receita-bar-fill"
+                                            style={{
+                                                width: `${Math.min(100, (Number(r.receitaAtiva) / Number(resumo.receitaTotal)) * 100)}%`
+                                            }}
+                                        />
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className="card">

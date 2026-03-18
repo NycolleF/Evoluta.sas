@@ -11,6 +11,7 @@ const menuItems = [
     { href: '#etapas', label: 'Etapas', icon: '◈' },
     { href: '#indicadores', label: 'KPIs', icon: '◎' },
     { href: '#progresso', label: 'Progresso', icon: '◔' },
+    { href: '#servicos', label: 'Servicos', icon: '◈' },
     { href: '#reunioes', label: 'Reunioes', icon: '◍' },
     { href: '#calendario', label: 'Calendario', icon: '▣' }
 ];

@@ -2,11 +2,13 @@ package com.evoluta.manager.service;
 
 import com.evoluta.manager.model.StatusCliente;
 import com.evoluta.manager.model.StatusEtapa;
+import com.evoluta.manager.model.StatusServico;
 import com.evoluta.manager.repository.ClienteRepository;
 import com.evoluta.manager.repository.DemandaRepository;
 import com.evoluta.manager.repository.EtapaRepository;
 import com.evoluta.manager.repository.IndicadorRepository;
 import com.evoluta.manager.repository.ProgressoRepository;
+import com.evoluta.manager.repository.ServicoRepository;
 import com.evoluta.manager.model.Progresso;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,19 +25,22 @@ public class DashboardService {
     private final EtapaRepository etapaRepository;
     private final IndicadorRepository indicadorRepository;
     private final ProgressoRepository progressoRepository;
+    private final ServicoRepository servicoRepository;
 
     public DashboardService(
         ClienteRepository clienteRepository,
         DemandaRepository demandaRepository,
         EtapaRepository etapaRepository,
         IndicadorRepository indicadorRepository,
-        ProgressoRepository progressoRepository
+        ProgressoRepository progressoRepository,
+        ServicoRepository servicoRepository
     ) {
         this.clienteRepository = clienteRepository;
         this.demandaRepository = demandaRepository;
         this.etapaRepository = etapaRepository;
         this.indicadorRepository = indicadorRepository;
         this.progressoRepository = progressoRepository;
+        this.servicoRepository = servicoRepository;
     }
 
     public Map<String, Object> resumo() {
@@ -62,6 +67,25 @@ public class DashboardService {
         data.put("clientesRecentes", clienteRepository.findAll().stream().limit(6).toList());
         data.put("demandasHoje", demandaRepository.findByDataDemandaOrderByStatusAscPrioridadeDescCriadoEmAsc(LocalDate.now()));
         data.put("totalDemandasHoje", demandaRepository.countByDataDemanda(LocalDate.now()));
+
+        // Receita por cliente (servicos ativos)
+        List<Object[]> receitaRows = servicoRepository.receitaAtivaAgrupadaPorCliente(StatusServico.ativo);
+        BigDecimal receitaTotal = receitaRows.stream()
+            .map(r -> (BigDecimal) r[3])
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.put("receitaTotal", receitaTotal);
+
+        List<Map<String, Object>> receitaPorCliente = receitaRows.stream().map(row -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("clienteId", row[0]);
+            m.put("nomeCliente", row[1]);
+            m.put("empresa", row[2]);
+            m.put("receitaAtiva", row[3]);
+            m.put("totalServicos", row[4]);
+            return m;
+        }).toList();
+        data.put("receitaPorCliente", receitaPorCliente);
+
         return data;
     }
 }
