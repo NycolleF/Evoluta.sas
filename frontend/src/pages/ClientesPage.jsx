@@ -22,6 +22,9 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
     const [form, setForm] = useState(initialForm);
     const [editandoId, setEditandoId] = useState(null);
     const [busca, setBusca] = useState('');
+    const [clienteFicha, setClienteFicha] = useState(null);
+    const [ficha, setFicha] = useState(null);
+    const [fichaLoading, setFichaLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [erro, setErro] = useState('');
     const [ok, setOk] = useState('');
@@ -68,6 +71,37 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
         setEditandoId(null);
         setErro('');
         setOk('');
+    }
+
+    async function abrirFicha(cliente) {
+        setClienteFicha(cliente);
+        setFichaLoading(true);
+
+        try {
+            const [etapasResp, indicadoresResp, progressoResp, historicoResp, reunioesResp] = await Promise.all([
+                api.get('/etapas', { params: { clienteId: cliente.id } }).catch(() => ({ data: [] })),
+                api.get('/indicadores', { params: { clienteId: cliente.id } }).catch(() => ({ data: [] })),
+                api.get(`/progresso/${cliente.id}`).catch(() => ({ data: null })),
+                api.get(`/progresso/historico/${cliente.id}`).catch(() => ({ data: [] })),
+                api.get(`/reunioes/recentes/${cliente.id}`).catch(() => ({ data: [] }))
+            ]);
+
+            setFicha({
+                etapas: etapasResp.data || [],
+                indicadores: indicadoresResp.data || [],
+                progresso: progressoResp.data || null,
+                historico: historicoResp.data || [],
+                reunioes: reunioesResp.data || []
+            });
+        } finally {
+            setFichaLoading(false);
+        }
+    }
+
+    function fecharFicha() {
+        setClienteFicha(null);
+        setFicha(null);
+        setFichaLoading(false);
     }
 
     async function onSubmit(e) {
@@ -172,15 +206,26 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                                     <td>{c.contato || c.email || '-'}</td>
                                     <td><span className={statusClass(c.status)}>{c.status}</span></td>
                                     <td>
-                                        <button
-                                            type="button"
-                                            className="btn-icon"
-                                            onClick={() => iniciarEdicao(c)}
-                                            title="Editar cliente"
-                                            aria-label={`Editar ${c.nome}`}
-                                        >
-                                            ✎
-                                        </button>
+                                        <div className="table-actions">
+                                            <button
+                                                type="button"
+                                                className="btn-icon btn-icon-soft"
+                                                onClick={() => abrirFicha(c)}
+                                                title="Abrir ficha do cliente"
+                                                aria-label={`Abrir ficha de ${c.nome}`}
+                                            >
+                                                ○
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-icon"
+                                                onClick={() => iniciarEdicao(c)}
+                                                title="Editar cliente"
+                                                aria-label={`Editar ${c.nome}`}
+                                            >
+                                                ✎
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -188,6 +233,91 @@ export default function ClientesPage({ clientes, onClienteCriado, onClienteAtual
                     </tbody>
                 </table>
             </div>
+
+            {clienteFicha ? (
+                <>
+                    <button type="button" className="drawer-overlay" aria-label="Fechar ficha do cliente" onClick={fecharFicha} />
+                    <aside className="client-drawer">
+                        <div className="client-drawer-head">
+                            <div>
+                                <span className="page-kicker">Ficha completa</span>
+                                <h3>{clienteFicha.nome}</h3>
+                                <p>{clienteFicha.empresa || 'Sem empresa informada'}</p>
+                            </div>
+                            <button type="button" className="btn-cancel" onClick={fecharFicha}>Fechar</button>
+                        </div>
+
+                        {fichaLoading ? <p className="muted">Montando a ficha do cliente...</p> : null}
+
+                        {!fichaLoading && ficha ? (
+                            <div className="drawer-stack">
+                                <div className="drawer-panel">
+                                    <h4>Contato e status</h4>
+                                    <div className="info-pairs">
+                                        <div><span>Status</span><strong>{clienteFicha.status}</strong></div>
+                                        <div><span>Contato</span><strong>{clienteFicha.contato || '-'}</strong></div>
+                                        <div><span>E-mail</span><strong>{clienteFicha.email || '-'}</strong></div>
+                                        <div><span>Observacoes</span><strong>{clienteFicha.observacoes || '-'}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div className="drawer-panel">
+                                    <h4>Progresso atual</h4>
+                                    <div className="etapas-progresso-bar large-progress-bar">
+                                        <div className="etapas-progresso-fill" style={{ width: `${ficha.progresso?.porcentagem || 0}%` }} />
+                                    </div>
+                                    <div className="drawer-highlight-row">
+                                        <strong>{ficha.progresso?.porcentagem || 0}%</strong>
+                                        <span>{ficha.progresso?.observacao || 'Sem observacao registrada.'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="drawer-panel">
+                                    <h4>Etapas recentes</h4>
+                                    {ficha.etapas.length === 0 ? <p className="muted">Nenhuma etapa registrada.</p> : (
+                                        <div className="drawer-list">
+                                            {ficha.etapas.slice(0, 4).map((etapa) => (
+                                                <article key={etapa.id} className="drawer-list-item">
+                                                    <strong>{etapa.nomeEtapa}</strong>
+                                                    <span>{etapa.tipo} · {etapa.status}</span>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="drawer-panel">
+                                    <h4>KPIs recentes</h4>
+                                    {ficha.indicadores.length === 0 ? <p className="muted">Nenhum KPI registrado.</p> : (
+                                        <div className="drawer-list">
+                                            {ficha.indicadores.slice(0, 4).map((indicador) => (
+                                                <article key={indicador.id} className="drawer-list-item">
+                                                    <strong>{indicador.tipoKpi}</strong>
+                                                    <span>{indicador.valor} {indicador.unidade || ''}</span>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="drawer-panel">
+                                    <h4>Reunioes recentes</h4>
+                                    {ficha.reunioes.length === 0 ? <p className="muted">Nenhuma reuniao recente.</p> : (
+                                        <div className="drawer-list">
+                                            {ficha.reunioes.map((reuniao) => (
+                                                <article key={reuniao.id} className="drawer-list-item">
+                                                    <strong>{reuniao.dataReuniao}</strong>
+                                                    <span>{reuniao.anotacoes || 'Sem anotacoes.'}</span>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : null}
+                    </aside>
+                </>
+            ) : null}
         </div>
     );
 }

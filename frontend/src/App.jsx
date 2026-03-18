@@ -8,6 +8,8 @@ import NovaDemandaPage from './pages/NovaDemandaPage';
 import ReunioesPage from './pages/ReunioesPage';
 import CalendarioPage from './pages/CalendarioPage';
 import EtapasPage from './pages/EtapasPage';
+import IndicadoresPage from './pages/IndicadoresPage';
+import ProgressoPage from './pages/ProgressoPage';
 
 export default function App() {
     const [user, setUser] = useState(() => {
@@ -104,7 +106,9 @@ export default function App() {
         '#nova-demanda': { title: 'Criar Demanda', render: () => <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} /> },
         '#reunioes': { title: 'Reunioes e Anotacoes', render: () => <ReunioesPage clientes={clientes} /> },
         '#calendario': { title: 'Calendario de Reunioes', render: () => <CalendarioPage /> },
-        '#etapas': { title: 'Etapas de Mentoria', render: () => <EtapasPage clientes={clientes} /> }
+        '#etapas': { title: 'Etapas de Mentoria', render: () => <EtapasPage clientes={clientes} /> },
+        '#indicadores': { title: 'Indicadores e KPIs', render: () => <IndicadoresPage clientes={clientes} /> },
+        '#progresso': { title: 'Progresso do Cliente', render: () => <ProgressoPage clientes={clientes} /> }
     };
 
     const page = PAGE_CONFIG[hash] || PAGE_CONFIG['#dashboard'];

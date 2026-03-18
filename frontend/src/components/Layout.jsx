@@ -9,6 +9,8 @@ const menuItems = [
     { href: '#cadastro-cliente', label: 'Clientes', icon: '◫' },
     { href: '#nova-demanda', label: 'Criar Demanda', icon: '✦' },
     { href: '#etapas', label: 'Etapas', icon: '◈' },
+    { href: '#indicadores', label: 'KPIs', icon: '◎' },
+    { href: '#progresso', label: 'Progresso', icon: '◔' },
     { href: '#reunioes', label: 'Reunioes', icon: '◍' },
     { href: '#calendario', label: 'Calendario', icon: '▣' }
 ];

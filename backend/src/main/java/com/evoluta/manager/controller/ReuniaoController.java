@@ -66,7 +66,10 @@ public class ReuniaoController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listar(@RequestParam(required = false) String mes) {
+    public ResponseEntity<?> listar(
+            @RequestParam(required = false) String mes,
+            @RequestParam(required = false) Integer clienteId
+    ) {
         YearMonth ref;
         try {
             ref = parseMes(mes);
@@ -74,9 +77,24 @@ public class ReuniaoController {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         }
 
+        if (clienteId != null) {
+            return ResponseEntity.ok(
+                    reuniaoRepository.findByClienteIdAndDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(
+                            clienteId,
+                            ref.atDay(1),
+                            ref.atEndOfMonth()
+                    )
+            );
+        }
+
         return ResponseEntity.ok(
                 reuniaoRepository.findByDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(ref.atDay(1), ref.atEndOfMonth())
         );
+    }
+
+    @GetMapping("/recentes/{clienteId}")
+    public List<Reuniao> listarRecentes(@PathVariable Integer clienteId) {
+        return reuniaoRepository.findTop5ByClienteIdOrderByDataReuniaoDescCriadoEmDesc(clienteId);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
