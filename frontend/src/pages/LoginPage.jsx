@@ -15,7 +15,7 @@ export default function LoginPage({ onLogin }) {
             const { data } = await api.post('/auth/login', { email, senha });
             onLogin(data);
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Falha no login.');
+            setErro(err?.response?.data?.mensagem || 'Nao foi possivel entrar agora. Confira seus dados e tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -25,7 +25,7 @@ export default function LoginPage({ onLogin }) {
         <div className="login-bg">
             <form className="login-card" onSubmit={handleSubmit}>
                 <h1>Evoluta</h1>
-                <p>Acesse seu painel de mentoria</p>
+                <p>Bem-vinda! Acesse seu painel para acompanhar clientes, demandas e reunioes.</p>
                 {erro ? <div className="error">{erro}</div> : null}
                 <label>E-mail</label>
                 <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />

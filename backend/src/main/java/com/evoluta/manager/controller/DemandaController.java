@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +36,7 @@ public class DemandaController {
     public ResponseEntity<?> criar(@Valid @RequestBody DemandaRequest request) {
         Cliente cliente = clienteRepository.findById(request.getClienteId()).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("mensagem", "Cliente nao encontrado."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Cliente nao encontrado."));
         }
 
         Demanda d = new Demanda();

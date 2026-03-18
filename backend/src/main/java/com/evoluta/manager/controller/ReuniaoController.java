@@ -41,6 +41,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/reunioes")
 public class ReuniaoController {
+    private static final String MSG_CLIENTE_NAO_ENCONTRADO = "Cliente nao encontrado.";
+    private static final String MSG_ARQUIVO_INVALIDO = "Apenas PDF e imagens sao permitidos.";
+    private static final String MSG_FALHA_ARQUIVOS = "Falha ao salvar os arquivos.";
+    private static final String MSG_FALHA_PDF = "Falha ao gerar o relatorio PDF.";
+    private static final String MSG_FALHA_ABRIR_ARQUIVO = "Falha ao abrir o arquivo.";
+
     private final ReuniaoRepository reuniaoRepository;
     private final ReuniaoArquivoRepository reuniaoArquivoRepository;
     private final ClienteRepository clienteRepository;
@@ -56,7 +62,7 @@ public class ReuniaoController {
 
     @GetMapping
     public List<Reuniao> listar(@RequestParam(required = false) String mes) {
-        YearMonth ref = (mes == null || mes.isBlank()) ? YearMonth.now() : YearMonth.parse(mes);
+        YearMonth ref = resolverMes(mes);
         return reuniaoRepository.findByDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(ref.atDay(1), ref.atEndOfMonth());
     }
 
@@ -69,7 +75,7 @@ public class ReuniaoController {
     ) {
         Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Cliente nao encontrado."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_CLIENTE_NAO_ENCONTRADO));
         }
 
         Reuniao reuniao = new Reuniao();
@@ -92,7 +98,7 @@ public class ReuniaoController {
                     boolean pdf = "application/pdf".equalsIgnoreCase(contentTypeSeguro);
                     boolean imagem = contentTypeSeguro.toLowerCase(Locale.ROOT).startsWith("image/");
                     if (!pdf && !imagem) {
-                        return ResponseEntity.badRequest().body(Map.of("mensagem", "Apenas PDF e imagens sao permitidos."));
+                        return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_ARQUIVO_INVALIDO));
                     }
 
                     String original = Objects.toString(arquivo.getOriginalFilename(), "arquivo");
@@ -110,7 +116,7 @@ public class ReuniaoController {
                     reuniao.getArquivos().add(meta);
                 }
             } catch (IOException e) {
-                return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao salvar os arquivos."));
+                return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_ARQUIVOS));
             }
         }
 
@@ -122,10 +128,10 @@ public class ReuniaoController {
     public ResponseEntity<?> gerarRelatorioPdf(@RequestParam Integer clienteId, @RequestParam(required = false) String mes) {
         Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
         if (cliente == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Cliente nao encontrado."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", MSG_CLIENTE_NAO_ENCONTRADO));
         }
 
-        YearMonth ref = (mes == null || mes.isBlank()) ? YearMonth.now() : YearMonth.parse(mes);
+        YearMonth ref = resolverMes(mes);
         List<Reuniao> reunioes = reuniaoRepository.findByClienteIdAndDataReuniaoBetweenOrderByDataReuniaoAscCriadoEmDesc(
                 clienteId,
                 ref.atDay(1),
@@ -141,7 +147,7 @@ public class ReuniaoController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nomeArquivo + "\"")
                     .body(pdf);
         } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao gerar o relatorio PDF."));
+            return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_PDF));
         }
     }
 
@@ -168,7 +174,19 @@ public class ReuniaoController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + arquivo.getNomeOriginal() + "\"")
                     .body(resource);
         } catch (IOException | IllegalArgumentException e) {
-            return ResponseEntity.internalServerError().body(Map.of("mensagem", "Falha ao abrir o arquivo."));
+            return ResponseEntity.internalServerError().body(Map.of("mensagem", MSG_FALHA_ABRIR_ARQUIVO));
+        }
+    }
+
+    private YearMonth resolverMes(String mes) {
+        if (mes == null || mes.isBlank()) {
+            return YearMonth.now();
+        }
+
+        try {
+            return YearMonth.parse(mes);
+        } catch (RuntimeException ignored) {
+            return YearMonth.now();
         }
     }
 

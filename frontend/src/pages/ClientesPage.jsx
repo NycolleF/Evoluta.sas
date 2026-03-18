@@ -69,7 +69,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
             setForm(initialForm);
             onClienteCriado?.(data);
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel cadastrar o cliente.');
+            setErro(err?.response?.data?.mensagem || 'Nao conseguimos cadastrar esse cliente agora. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
                     </select>
                     <textarea
                         name="observacoes"
-                        placeholder="Observacoes"
+                        placeholder="Observacoes importantes"
                         value={form.observacoes}
                         onChange={onChange}
                         rows={3}
@@ -104,7 +104,7 @@ export default function ClientesPage({ clientes, onClienteCriado }) {
             </div>
 
             <div className="card">
-                <h3>Clientes</h3>
+                <h3>Base de clientes</h3>
                 <SearchField
                     placeholder="Buscar por nome, telefone, empresa ou e-mail"
                     value={busca}

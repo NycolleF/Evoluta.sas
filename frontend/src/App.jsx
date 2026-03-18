@@ -8,6 +8,33 @@ import NovaDemandaPage from './pages/NovaDemandaPage';
 import ReunioesPage from './pages/ReunioesPage';
 import CalendarioPage from './pages/CalendarioPage';
 
+const PAGE_CONFIG = {
+    '#dashboard': {
+        title: 'Demandas do Dia',
+        render: ({ resumo }) => <DashboardPage resumo={resumo} />
+    },
+    '#cadastro-cliente': {
+        title: 'Cadastro de Cliente',
+        render: ({ clientes, onClienteCriado }) => <ClientesPage clientes={clientes} onClienteCriado={onClienteCriado} />
+    },
+    '#nova-demanda': {
+        title: 'Criar Demanda',
+        render: ({ clientes, onDemandaCriada }) => <NovaDemandaPage clientes={clientes} onDemandaCriada={onDemandaCriada} />
+    },
+    '#reunioes': {
+        title: 'Reunioes e Anotacoes',
+        render: ({ clientes }) => <ReunioesPage clientes={clientes} />
+    },
+    '#calendario': {
+        title: 'Calendario de Reunioes',
+        render: () => <CalendarioPage />
+    }
+};
+
+function getPage(hash) {
+    return PAGE_CONFIG[hash] || PAGE_CONFIG['#dashboard'];
+}
+
 export default function App() {
     const [user, setUser] = useState(() => {
         const raw = localStorage.getItem('evoluta_user');
@@ -93,31 +120,18 @@ export default function App() {
         return <LoginPage onLogin={handleLogin} />;
     }
 
-    const pageTitle =
-        hash === '#cadastro-cliente'
-            ? 'Cadastro de Cliente'
-            : hash === '#nova-demanda'
-                ? 'Criar Demanda'
-                : hash === '#reunioes'
-                    ? 'Reunioes e Anotacoes'
-                    : hash === '#calendario'
-                        ? 'Calendario de Reunioes'
-                        : 'Demandas do Dia';
+    const page = getPage(hash);
+    const pageProps = {
+        resumo,
+        clientes,
+        onClienteCriado: handleClienteCriado,
+        onDemandaCriada: handleDemandaCriada
+    };
 
     return (
-        <Layout user={user} onLogout={logout} pageTitle={pageTitle} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
+        <Layout user={user} onLogout={logout} pageTitle={page.title} theme={theme} onToggleTheme={toggleTheme} activeHash={hash}>
             <div key={hash} className="page-transition" aria-live="polite">
-                {hash === '#cadastro-cliente' ? (
-                    <ClientesPage clientes={clientes} onClienteCriado={handleClienteCriado} />
-                ) : hash === '#nova-demanda' ? (
-                    <NovaDemandaPage clientes={clientes} onDemandaCriada={handleDemandaCriada} />
-                ) : hash === '#reunioes' ? (
-                    <ReunioesPage clientes={clientes} />
-                ) : hash === '#calendario' ? (
-                    <CalendarioPage />
-                ) : (
-                    <DashboardPage resumo={resumo} />
-                )}
+                {page.render(pageProps)}
             </div>
         </Layout>
     );

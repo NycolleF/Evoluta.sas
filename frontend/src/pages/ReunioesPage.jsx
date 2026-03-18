@@ -21,6 +21,8 @@ function formatarData(data) {
 }
 
 export default function ReunioesPage({ clientes }) {
+    const base = api.defaults.baseURL || 'http://localhost:8081/api';
+
     const [form, setForm] = useState({
         clienteId: '',
         dataReuniao: hojeISO(),
@@ -105,7 +107,7 @@ export default function ReunioesPage({ clientes }) {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            setOk('Reuniao salva com sucesso.');
+            setOk('Reuniao registrada com sucesso!');
             setForm((prev) => ({
                 ...prev,
                 anotacoes: '',
@@ -113,7 +115,7 @@ export default function ReunioesPage({ clientes }) {
             }));
             carregarReunioes(mesFiltro);
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel salvar a reuniao.');
+            setErro(err?.response?.data?.mensagem || 'Nao conseguimos salvar a reuniao agora. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -132,7 +134,6 @@ export default function ReunioesPage({ clientes }) {
             return;
         }
 
-        const base = api.defaults.baseURL || 'http://localhost:8081/api';
         const url = `${base}/reunioes/relatorio-pdf?clienteId=${id}&mes=${mesFiltro}`;
         window.open(url, '_blank');
     }
@@ -209,12 +210,12 @@ export default function ReunioesPage({ clientes }) {
                                 <tr key={r.id}>
                                     <td>{formatarData(r.dataReuniao)}</td>
                                     <td>{r.cliente?.nome || '-'}</td>
-                                    <td>{r.anotacoes || '-'}</td>
+                                    <td>{r.anotacoes || 'Sem anotacoes'}</td>
                                     <td>
                                         {r.arquivos?.length ? (
                                             <div className="anexos-inline">
                                                 {r.arquivos.map((a) => (
-                                                    <a key={a.id} href={`http://localhost:8081/api/reunioes/arquivos/${a.id}`} target="_blank" rel="noreferrer">
+                                                    <a key={a.id} href={`${base}/reunioes/arquivos/${a.id}`} target="_blank" rel="noreferrer">
                                                         {a.nomeOriginal}
                                                     </a>
                                                 ))}

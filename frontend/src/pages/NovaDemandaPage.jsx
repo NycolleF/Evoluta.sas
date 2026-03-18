@@ -71,10 +71,10 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
             });
 
             setForm({ ...initial, clienteId: form.clienteId });
-            setOk('Demanda criada com sucesso.');
+            setOk('Demanda criada com sucesso!');
             onDemandaCriada?.();
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel criar a demanda.');
+            setErro(err?.response?.data?.mensagem || 'Nao conseguimos criar a demanda agora. Tente novamente.');
         } finally {
             setLoading(false);
         }

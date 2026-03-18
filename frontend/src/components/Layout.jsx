@@ -6,7 +6,7 @@ function navClass(currentHash, targetHash) {
 
 const menuItems = [
     { href: '#dashboard', label: 'Principal', icon: '◌' },
-    { href: '#cadastro-cliente', label: 'Cadastro Cliente', icon: '◫' },
+    { href: '#cadastro-cliente', label: 'Cadastro de Clientes', icon: '◫' },
     { href: '#nova-demanda', label: 'Criar Demanda', icon: '✦' },
     { href: '#reunioes', label: 'Reunioes', icon: '◍' },
     { href: '#calendario', label: 'Calendario', icon: '▣' }
@@ -123,7 +123,7 @@ export default function Layout({ user, onLogout, children, pageTitle, theme, onT
                     </div>
                     <div className="top-meta">
                         <button type="button" className="theme-pill theme-toggle" onClick={onToggleTheme}>
-                            Tema {theme === 'light' ? 'claro' : 'escuro'}
+                            Tema: {theme === 'light' ? 'claro' : 'escuro'}
                         </button>
                     </div>
                 </header>
