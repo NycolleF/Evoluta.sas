@@ -1,4 +1,3 @@
-README PERFEITO 
 Evoluta Client Manager
 
 Sistema SaaS para gestão de mentorias empresariais, desenvolvido com arquitetura fullstack moderna.
