@@ -1,102 +1,76 @@
-# Evoluta Client Manager
+README PERFEITO 
+Evoluta Client Manager
 
-Sistema de Gestao de Mentoria Empresarial na stack Java + JavaScript.
+Sistema SaaS para gestão de mentorias empresariais, desenvolvido com arquitetura fullstack moderna.
 
-## Tecnologias
+ Sobre o projeto
 
-- Java 17+
-- Spring Boot 3 (API REST)
-- React + Vite (frontend)
-- MariaDB
+O Evoluta é uma aplicação web criada para auxiliar empresas e mentores na organização de clientes, acompanhamento de processos e centralização de informações.
 
-## Estrutura
+O sistema foi projetado com foco em escalabilidade e separação de responsabilidades, utilizando backend em Java com Spring Boot e frontend em React.
 
-```
-Evoluta.sas/
-|- backend/   API Spring Boot
-|- frontend/  App React
-|- banco/     Script SQL
-```
+Tecnologias utilizadas
+Java 17
+Spring Boot (API REST)
+React + Vite
+MariaDB
+⚙️ Funcionalidades
+Cadastro de clientes
+Gestão de mentorias
+Sistema de autenticação (login)
+Integração entre frontend e backend via API REST
+Persistência de dados em banco relacional
+Arquitetura
 
-## Banco de Dados
+O projeto foi dividido em:
 
-Importe o script:
+backend/ → API REST com Spring Boot
+frontend/ → Interface em React
+banco/ → Scripts SQL
+Deploy
 
-```
-"C:\Program Files\MariaDB 12.2\bin\mariadb.exe" -u root evoluta_db < banco/evoluta.sql
-```
+O sistema pode ser publicado gratuitamente utilizando:
 
-## Rodando o Backend
+Backend: Render
+Frontend: Vercel
+Status do projeto
 
-Se tiver Maven instalado no sistema:
+Em desenvolvimento – novas funcionalidades estão sendo implementadas.💻 README PERFEITO (COPIA E COLA)
+Evoluta Client Manager
 
-```
-mvn -f backend/pom.xml spring-boot:run
-```
+Sistema SaaS para gestão de mentorias empresariais, desenvolvido com arquitetura fullstack moderna.
 
-Se estiver usando Maven local do projeto:
+Sobre o projeto
 
-```
-frontend/tools/apache-maven-3.9.9/bin/mvn.cmd -f backend/pom.xml spring-boot:run
-```
+O Evoluta é uma aplicação web criada para auxiliar empresas e mentores na organização de clientes, acompanhamento de processos e centralização de informações.
 
-Backend padrao: `http://localhost:8081`
+O sistema foi projetado com foco em escalabilidade e separação de responsabilidades, utilizando backend em Java com Spring Boot e frontend em React.
 
-## Rodando o Frontend
+Tecnologias utilizadas
+Java 17
+Spring Boot (API REST)
+React + Vite
+MariaDB
+⚙️ Funcionalidades
+Cadastro de clientes
+Gestão de mentorias
+Sistema de autenticação (login)
+Integração entre frontend e backend via API REST
+Persistência de dados em banco relacional
+Arquitetura
 
-```
-cd frontend
-npm.cmd install
-npm.cmd run dev
-```
+O projeto foi dividido em:
 
-Frontend padrao: `http://localhost:5173`
+backend/ → API REST com Spring Boot
+frontend/ → Interface em React
+banco/ → Scripts SQL
+Deploy
 
-## Colocar Online (Hospedagem Gratuita)
+O sistema pode ser publicado gratuitamente utilizando:
 
-Stack recomendada (plano free):
+Backend: Render
+Frontend: Vercel
 
-- Frontend: Vercel
-- Backend (Spring Boot): Render
-- Banco: Supabase Postgres (ou Neon Postgres)
+Status do projeto
 
-### 1) Banco gratuito (Supabase/Neon)
-
-1. Crie um projeto no Supabase ou Neon.
-2. Copie a connection string Postgres (formato `jdbc:postgresql://...`).
-3. No primeiro deploy do backend, deixe `JPA_DDL_AUTO=update` para criar as tabelas automaticamente.
-
-### 2) Deploy do backend no Render
-
-1. Crie um novo `Web Service` apontando para este repositório.
-2. Configure:
- - Build command: `mvn -f backend/pom.xml clean package -DskipTests`
- - Start command: `java -jar backend/target/evoluta-manager-api-1.0.0.jar`
-3. Variáveis de ambiente no Render:
- - `DATABASE_URL=jdbc:postgresql://SEU_HOST:5432/SEU_BANCO?sslmode=require`
- - `DB_USERNAME=SEU_USUARIO`
- - `DB_PASSWORD=SUA_SENHA`
- - `JPA_DDL_AUTO=update`
- - `JPA_SHOW_SQL=false`
- - `APP_CORS_ALLOWED_ORIGINS=https://SEU_FRONTEND.vercel.app`
-
-Quando subir, copie a URL pública do backend (ex: `https://evoluta-api.onrender.com`).
-
-### 3) Deploy do frontend no Vercel
-
-1. Importe o repositório no Vercel.
-2. Root Directory: `frontend`
-3. Build command: `npm run build`
-4. Output directory: `dist`
-5. Variável de ambiente no Vercel:
- - `VITE_API_URL=https://SEU_BACKEND.onrender.com/api`
-
-Depois do deploy, atualize no Render:
-
-- `APP_CORS_ALLOWED_ORIGINS=https://SEU_FRONTEND.vercel.app,http://localhost:5173`
-
-### 4) Observações importantes
-
-- Render free pode "hibernar" quando sem uso (primeiro acesso pode demorar alguns segundos).
-- Se mudar domínio do frontend, atualize `APP_CORS_ALLOWED_ORIGINS`.
-- Para produção estável no longo prazo, considere plano pago para evitar hibernação.
+Em desenvolvimento – novas funcionalidades estão sendo implementadas.
