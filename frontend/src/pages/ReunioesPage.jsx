@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 
 function apiOrigin() {
-    const base = api.defaults.baseURL || 'http://localhost:8081/api';
+    const base = api.defaults.baseURL || '/api';
+    if (typeof base === 'string' && base.startsWith('/')) {
+        return window.location.origin;
+    }
     try {
         return new URL(base).origin;
     } catch {
-        return 'http://localhost:8081';
+        return window.location.origin;
     }
 }
 import SearchField from '../components/SearchField';
@@ -114,7 +117,7 @@ export default function ReunioesPage({ clientes }) {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            setOk('Reuniao salva com sucesso.');
+            setOk('Reunião salva com sucesso.');
             setForm((prev) => ({
                 ...prev,
                 anotacoes: '',
@@ -122,7 +125,7 @@ export default function ReunioesPage({ clientes }) {
             }));
             carregarReunioes(mesFiltro);
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel salvar a reuniao.');
+            setErro(err?.response?.data?.mensagem || 'Não foi possível salvar a reunião.');
         } finally {
             setLoading(false);
         }
@@ -149,7 +152,7 @@ export default function ReunioesPage({ clientes }) {
     return (
         <div className="content">
             <div className="card">
-                <h3>Registro de Reuniao</h3>
+                <h3>Registro de reunião</h3>
                 {erro ? <div className="error">{erro}</div> : null}
                 {ok ? <div className="success">{ok}</div> : null}
 
@@ -172,24 +175,24 @@ export default function ReunioesPage({ clientes }) {
                     <textarea
                         name="anotacoes"
                         rows={5}
-                        placeholder="Anotacoes da reuniao"
+                        placeholder="Anotações da reunião"
                         value={form.anotacoes}
                         onChange={handleInputChange}
                     />
                     <input type="file" multiple accept="application/pdf,image/*" onChange={handleFilesChange} />
                     <button className="primary" disabled={loading} type="submit">
-                        {loading ? 'Salvando...' : 'Salvar Reuniao'}
+                        {loading ? 'Salvando...' : 'Salvar reunião'}
                     </button>
                 </form>
             </div>
 
             <div className="card">
                 <div className="toolbar">
-                    <h3>Reunioes do Mes</h3>
+                    <h3>Reuniões do mês</h3>
                     <div className="toolbar-actions">
                         <input type="month" value={mesFiltro} onChange={handleMonthChange} />
                         <select value={clienteRelatorio} onChange={(e) => setClienteRelatorio(e.target.value)}>
-                            <option value="">Cliente para relatorio</option>
+                            <option value="">Cliente para relatório</option>
                             {clientesOrdenados.map((c) => (
                                 <option key={c.id} value={c.id}>{c.nome}</option>
                             ))}
@@ -204,14 +207,14 @@ export default function ReunioesPage({ clientes }) {
                         <tr>
                             <th>Data</th>
                             <th>Cliente</th>
-                            <th>Anotacoes</th>
+                            <th>Anotações</th>
                             <th>Anexos</th>
                         </tr>
                     </thead>
                     <tbody>
                         {reunioes.length === 0 ? (
                             <tr>
-                                <td colSpan={4}>Nenhuma reuniao neste mes.</td>
+                                <td colSpan={4}>Nenhuma reunião neste mês.</td>
                             </tr>
                         ) : (
                             reunioes.map((r) => (

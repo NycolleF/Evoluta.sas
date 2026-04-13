@@ -11,11 +11,11 @@ export default function Layout({ user, onLogout, children, pageTitle, theme, onT
                 <div className="brand">
                     <div className="leaf">🌿</div>
                     <h1>Evoluta</h1>
-                    <p>Gestao de mentoria com foco em rotina, demandas e reunioes.</p>
+                    <p>Gestão de mentoria com foco em rotina, demandas e reuniões.</p>
                 </div>
                 <div className="side-scroll">
                     <div className="side-box">
-                        <span className="side-box-title">Navegacao</span>
+                        <span className="side-box-title">Navegação</span>
                         <nav className="menu">
                             {MENU_ITEMS.map((item) => (
                                 <a key={item.href} className={navClass(activeHash, item.href)} href={item.href}>

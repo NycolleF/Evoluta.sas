@@ -72,7 +72,7 @@ export default function CalendarioPage() {
     return (
         <div className="card calendar-card">
             <div className="toolbar">
-                <h3>Calendario de Reunioes</h3>
+                <h3>Calendário de reuniões</h3>
                 <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
             </div>
 
@@ -97,12 +97,12 @@ export default function CalendarioPage() {
                                     {porDia.get(dia).map((r) => (
                                         <p key={r.id}>
                                             <span>{r.cliente?.nome}</span>
-                                            <small>{(r.anotacoes || '').slice(0, 58) || 'Reuniao'}</small>
+                                            <small>{(r.anotacoes || '').slice(0, 58) || 'Reunião'}</small>
                                         </p>
                                     ))}
                                 </div>
                             ) : (
-                                <span className="muted">Sem reunioes</span>
+                                <span className="muted">Sem reuniões</span>
                             )}
                         </article>
                     )

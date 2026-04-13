@@ -57,7 +57,7 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
         }
 
         if (!form.titulo.trim()) {
-            setErro('Informe o titulo da demanda.');
+            setErro('Informe o título da demanda.');
             return;
         }
 
@@ -74,7 +74,7 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
             setOk('Demanda criada com sucesso.');
             onDemandaCriada?.();
         } catch (err) {
-            setErro(err?.response?.data?.mensagem || 'Nao foi possivel criar a demanda.');
+            setErro(err?.response?.data?.mensagem || 'Não foi possível criar a demanda.');
         } finally {
             setLoading(false);
         }
@@ -101,21 +101,21 @@ export default function NovaDemandaPage({ clientes, onDemandaCriada }) {
                     ))}
                 </select>
 
-                <input name="titulo" placeholder="Titulo da demanda*" value={form.titulo} onChange={handleInputChange} required />
-                <textarea name="descricao" rows={4} placeholder="Descricao" value={form.descricao} onChange={handleInputChange} />
+                <input name="titulo" placeholder="Título da demanda*" value={form.titulo} onChange={handleInputChange} required />
+                <textarea name="descricao" rows={4} placeholder="Descrição" value={form.descricao} onChange={handleInputChange} />
 
                 <input name="dataDemanda" type="date" value={form.dataDemanda} onChange={handleInputChange} required />
 
                 <select name="prioridade" value={form.prioridade} onChange={handleInputChange}>
                     <option value="baixa">Baixa</option>
-                    <option value="media">Media</option>
+                    <option value="media">Média</option>
                     <option value="alta">Alta</option>
                 </select>
 
                 <select name="status" value={form.status} onChange={handleInputChange}>
                     <option value="pendente">Pendente</option>
                     <option value="em_andamento">Em andamento</option>
-                    <option value="concluida">Concluida</option>
+                    <option value="concluida">Concluída</option>
                 </select>
 
                 <button className="primary" disabled={loading} type="submit">

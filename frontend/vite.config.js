@@ -4,6 +4,18 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
     plugins: [react()],
     server: {
-        port: 5173
+        host: true,
+        port: 5173,
+        strictPort: true,
+        allowedHosts: ['evoluta-nycolle.loca.lt', '.loca.lt'],
+        proxy: {
+            '/api': {
+                target: 'http://localhost:8081',
+                changeOrigin: true,
+                headers: {
+                    origin: 'http://localhost:5173'
+                }
+            }
+        }
     }
 });

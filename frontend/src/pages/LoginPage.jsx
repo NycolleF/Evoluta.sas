@@ -25,7 +25,7 @@ export default function LoginPage({ onLogin }) {
         <div className="login-bg">
             <form className="login-card" onSubmit={handleSubmit}>
                 <h1>Evoluta</h1>
-                <p>Acesse seu painel de mentoria</p>
+                <p>Acesse o painel da sua mentoria</p>
                 {erro ? <div className="error">{erro}</div> : null}
                 <label>E-mail</label>
                 <input

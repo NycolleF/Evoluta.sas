@@ -15,8 +15,8 @@ export default function DashboardPage({ resumo }) {
             <section className="hero-card">
                 <div>
                     <span className="page-kicker">Resumo de hoje</span>
-                    <h3>Visao rapida da operacao</h3>
-                    <p>Acompanhe clientes ativos, demandas prioritarias e o ritmo geral do dia em um unico painel.</p>
+                    <h3>Visão rápida da operação</h3>
+                    <p>Acompanhe clientes ativos, demandas prioritárias e o ritmo do dia em um só painel.</p>
                 </div>
             </section>
 
